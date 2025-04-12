@@ -97,13 +97,19 @@ class ChunithmUtilPlugin(BasePlugin):
         charturl = os.getenv("CHART_URL")
         bgurl = os.getenv("CHART_BG_URL")
         barurl = os.getenv("CHART_BAR_URL")
-        charturl = charturl.replace("<chartid>", chartID).replace("<gen>", gen)
-        bgurl = bgurl.replace("<chartid>", chartID).replace("<gen>", gen)
-        barurl = barurl.replace("<chartid>", chartID).replace("<gen>", gen)
+        charturl = charturl.replace("<chartid>", chartID)
+        bgurl = bgurl.replace("<chartid>", chartID)
+        barurl = barurl.replace("<chartid>", chartID)
         if diff == 'ult':
-            charturl = charturl.replace("mst.png", "ult.png")
-        elif diff == 'exp':
-            charturl = charturl.replace("mst.png", "ult.png")
+            charturl = charturl.replace("mst.png", f"{diff}.png").replace("<gen>", diff)
+            bgurl = bgurl.replace("<gen>", diff)
+            barurl = barurl.replace("<gen>", diff)
+        else:
+            charturl = charturl.replace("<gen>", gen)
+            bgurl = bgurl.replace("<gen>", gen)
+            barurl = barurl.replace("<gen>", gen)
+        if diff != "mas":
+            charturl = charturl.replace("mst.png", f"{diff}.png")
         return charturl, bgurl, barurl
     
     def checkChartCache(self, chartid, difficulty):
@@ -565,6 +571,7 @@ class ChunithmUtilPlugin(BasePlugin):
                         return
                     self.ap.logger.info(f"请求完成")
                     if response1.status_code == 200 and response2.status_code == 200:
+                        self.ap.logger.info(f"图片加载中")
                         img1 = PIL.Image.open(BytesIO(response1.content)).convert("RGBA")
                         img2 = PIL.Image.open(BytesIO(response2.content)).convert("RGBA")
                         img3 = PIL.Image.open(BytesIO(response3.content)).convert("RGBA")
@@ -576,10 +583,10 @@ class ChunithmUtilPlugin(BasePlugin):
                             new_image = PIL.Image.alpha_composite(new_image, img1)
                             new_image = PIL.Image.alpha_composite(new_image, img3)
                             # 保存拼接后的图片
-                            new_image.save(os.path.join(chart_cache_dir, f"{chartid}.png"))
-                            self.ap.logger.info(f"图片拼接完成，已保存为{chartid}.png")
                             save_path = os.path.join(chart_cache_dir, f"{chartid}_{"" if difficulty == "mas" else difficulty}.png")
+                            new_image.save(save_path)
                             img_conponent = await image_langbot.from_local(save_path)
+                            self.ap.logger.info(f"发送chart中...")
                             await ctx.reply(MessageChain([
                                 Plain(f"歌曲 - {song.get('songId')}\n"),
                                 Plain(f"难度 - {difficulty}\n"),
