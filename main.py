@@ -580,7 +580,7 @@ class ChunithmUtilPlugin(BasePlugin):
                             new_image = PIL.Image.alpha_composite(new_image, img1)
                             new_image = PIL.Image.alpha_composite(new_image, img3)
                             # 保存拼接后的图片
-                            save_path = os.path.join(chart_cache_dir, f"{chartid}_{"" if difficulty == "mas" else difficulty}.png")
+                            save_path = os.path.join(chart_cache_dir, f'{chartid}_{"" if difficulty == "mas" else difficulty}.png')
                             new_image.save(save_path)
                             img_conponent = await image_langbot.from_local(save_path)
                             self.ap.logger.info(f"发送chart中...")
