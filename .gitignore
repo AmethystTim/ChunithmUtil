@@ -6,7 +6,6 @@ data/*
 !cache/charts/.gitkeep
 !cache/covers/.gitkeep
 !cache/others/.gitkeep
-!data/.gitkeep
 !data/alias.json
 
 utils/__pycache__
