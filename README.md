@@ -1,6 +1,6 @@
 <h1 align="center">ChunithmUtil</h1>
 
-<h4 align="center">集成了多项实用功能的Chunithm插件</h4>
+<h4 align="center">集成了多项Chunithm实用功能的LangBot插件🧩</h4>
 
 ![ChunithmUtil](./images/icon.png)
 
