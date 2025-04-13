@@ -7,8 +7,7 @@ data/*
 !cache/covers/.gitkeep
 !cache/others/.gitkeep
 !data/.gitkeep
-
-data/
+!data/alias.json
 
 utils/__pycache__
 

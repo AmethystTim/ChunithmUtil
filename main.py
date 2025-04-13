@@ -115,15 +115,26 @@ class ChunithmUtilPlugin(BasePlugin):
     def checkChartCache(self, chartid, difficulty):
         return os.path.exists(os.path.join(chart_cache_dir, f"{chartid}_{"" if difficulty == "mas" else difficulty}.png"))
     
-    async def searchSong(self, ctx: EventContext, song_name: str):
+    async def searchSong(self, ctx: EventContext, song_name: str) -> list:
+        '''
+        搜索歌曲
+        
+        args:
+            ctx: 事件上下文
+            song_name: 歌曲名称/cid
+        return:
+            匹配歌曲列表
+        '''
         songs = []  # 歌曲列表
         song = None # 歌曲字典
         matched_songs = []  # 匹配歌曲ID列表
         if song_name.startswith('c') and all(char.isdigit() for char in song_name[1:]):   # 查歌曲索引
+            self.ap.logger.info(f"使用cid查询：{song_name}")
             with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.getenv("SONG_PATH")), "r", encoding="utf-8") as file:
-                songs = json.load(file).get("songs")
+                songs = list(json.load(file).get("songs"))
                 song_index = int(song_name[1:])
                 song = songs[song_index]
+                matched_songs.append({"id":songs.index(song),"songId":song.get('songId')})
         else:  # 别名/模糊查歌
             with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.getenv("SONG_PATH")), "r", encoding="utf-8") as file:
                 songs = json.load(file).get("songs")
@@ -141,7 +152,7 @@ class ChunithmUtilPlugin(BasePlugin):
                     self.ap.logger.info(f"模糊匹配+别名匹配结果：{matched_songs}")
                 matched_songs = {json.dumps(d, sort_keys=True): d for d in matched_songs}   # 去重
                 matched_songs = list(matched_songs.values())
-                return matched_songs
+        return matched_songs
     
     def calcTolerance(self, noteCounts: dict) -> dict:
         '''
@@ -182,8 +193,8 @@ class ChunithmUtilPlugin(BasePlugin):
     async def initialize(self):
         pass
 
-    # 当收到群消息时触发
     @handler(GroupMessageReceived)
+    @handler(PersonMessageReceived)
     async def group_message_received(self, ctx: EventContext):
         msg = str(ctx.event.message_chain)
         sender_id = ctx.event.query.message_event.sender.id # 获取发送消息的用户 ID
@@ -196,25 +207,11 @@ class ChunithmUtilPlugin(BasePlugin):
                     song_name = re.search(r"^(.+)是什么歌$", msg).group(1)
                     self.ap.logger.info(f"查歌：{song_name}")
                     songs = []  # 歌曲列表
-                    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.getenv("SONG_PATH")), "r", encoding="utf-8") as file:
-                        songs = json.load(file).get("songs")
-                        # 在alias.json中查找别名
-                        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.getenv("ALIAS_PATH")), "r", encoding="utf-8") as file:
-                            songs_alias = json.load(file).get("songs")  # alias.json歌曲列表
-                            for song_alias in songs_alias:  # 歌曲
-                                for alias in song_alias.get('aliases'): # 遍历歌曲所有别名
-                                    if alias == song_name:  # 别名采用精准匹配
-                                        tmp_list = [s.get('songId') for s in songs] # 为获取索引临时构造songId列表
-                                        matched_songs.append({"id":tmp_list.index(song_alias.get('songId')),"songId":song_alias.get('songId')})
-                            self.ap.logger.info(f"别名匹配结果：{matched_songs}")
-                            # 在data.json中模糊搜索
-                            matched_songs.extend(self.fuzzySearch(song_name, songs))
-                            self.ap.logger.info(f"模糊匹配结果：{matched_songs}")
-
-                    matched_songs = {json.dumps(d, sort_keys=True): d for d in matched_songs}   # 去重
-                    matched_songs = list(matched_songs.values())
+                    matched_songs = await self.searchSong(ctx, song_name)
                     if matched_songs and len(matched_songs) == 1:   # 只有一个符合直接返回
                         song_index = int(matched_songs[0].get('id'))
+                        with open(os.path.join(os.path.dirname(__file__), os.getenv("SONG_PATH")), "r", encoding="utf-8") as f:
+                            songs = json.load(f).get("songs")
                         if 0 <= song_index < len(songs):
                             song = songs[song_index]
                             checkIsHit(os.getenv('COVER_URL'), song.get('imageName'))
@@ -526,7 +523,7 @@ class ChunithmUtilPlugin(BasePlugin):
                         msg_chain = MessageChain([Plain(f"有多个曲目符合条件\n")])
                         for song in matched_songs:
                             msg_chain.append(Plain(f"c{song.get('id')} - {song.get('songId')}\n"))
-                        msg_chain.append(Plain(f"\n请使用“chu容错 [歌曲ID]”进行容错计算"))
+                        msg_chain.append(Plain(f"\n请使用“chuchart [歌曲ID]”进行谱面查询"))
                         await ctx.reply(msg_chain)
                         return
                     # 难度选择
