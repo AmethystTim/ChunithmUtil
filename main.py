@@ -113,7 +113,7 @@ class ChunithmUtilPlugin(BasePlugin):
         return charturl, bgurl, barurl
     
     def checkChartCache(self, chartid, difficulty):
-        return os.path.exists(os.path.join(chart_cache_dir, f"{chartid}_{"" if difficulty == "mas" else difficulty}.png"))
+        return os.path.exists(os.path.join(chart_cache_dir, f'{chartid}_{"" if difficulty == "mas" else difficulty}.png'))
     
     async def searchSong(self, ctx: EventContext, song_name: str) -> list:
         '''
@@ -495,9 +495,9 @@ class ChunithmUtilPlugin(BasePlugin):
                     tolerance = self.calcTolerance(song['sheets'][self.diff2index[difficulty]]['noteCounts'])
                     self.ap.logger.info(f"容错：{tolerance}")
                     await ctx.reply(MessageChain([
-                        Plain(f"歌曲 - {song.get("songId")} - {difficulty}难度容错：\n"),
-                        Plain(f"鸟容错\n100小j：{tolerance["1007500"]["100j"]}个attack\n50小j：{tolerance["1007500"]["50j"]}个attack\n"),
-                        Plain(f"鸟加容错\n100小j：{tolerance["1009000"]["100j"]}个attack\n50小j：{tolerance["1009000"]["50j"]}个attack")
+                        Plain(f'歌曲 - {song.get("songId")} - {difficulty}难度容错：\n'),
+                        Plain(f'鸟容错\n100小j：{tolerance["1007500"]["100j"]}个attack\n50小j：{tolerance["1007500"]["50j"]}个attack\n'),
+                        Plain(f'鸟加容错\n100小j：{tolerance["1009000"]["100j"]}个attack\n50小j：{tolerance["1009000"]["50j"]}个attack')
                     ]))
                     return
                 case "chuchart [歌曲id/别名] [难度]":
@@ -537,7 +537,7 @@ class ChunithmUtilPlugin(BasePlugin):
                     # cache中寻找chart
                     chartid = self.getChartID(song)
                     if self.checkChartCache(chartid, difficulty):
-                        local_path = os.path.join(chart_cache_dir, f"{chartid}_{"" if difficulty == "mas" else difficulty}.png")
+                        local_path = os.path.join(chart_cache_dir, f'{chartid}_{"" if difficulty == "mas" else difficulty}.png')
                         self.ap.logger.info(f"命中缓存，使用本地图片")
                         img_conponent = await image_langbot.from_local(local_path)
                         await ctx.reply(MessageChain([
