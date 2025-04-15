@@ -10,6 +10,7 @@ import dotenv
 import difflib
 import PIL
 from io import BytesIO
+from itertools import islice
 from plugins.ChunithmUtil.forward import forward_message
 from plugins.ChunithmUtil.utils.cover_cache import *
 from pkg.platform.types.message import Image as image_langbot
@@ -40,6 +41,8 @@ class ChunithmUtilPlugin(BasePlugin):
             "chu lv [难度]": r"^chu lv (\S+)$",
             "chu容错 [歌曲id/别名] [难度]": r"^chu容错 (c\d+|.+?)(?: (exp|mas|ult))?$",
             "chuchart [歌曲id/别名] [难度]": r"^chuchart (c\d+|.+?)(?: (exp|mas|ult))?$",
+            "chu曲师 [曲师名]" : r"^chu(曲师| qs) (.+)$",
+            "chu谱师 [谱师名]": r"^chu(谱师| ps) (.+)$",
         }
     
     def matchPattern(self, msg):
@@ -57,7 +60,7 @@ class ChunithmUtilPlugin(BasePlugin):
                 return pattern
         return None
     
-    def fuzzySearch(self, query: str, songs: list):
+    def songFuzzySearch(self, query: str, songs: list):
         '''
         模糊搜索
         
@@ -148,7 +151,7 @@ class ChunithmUtilPlugin(BasePlugin):
                                 matched_songs.append({"id":tmp_list.index(song_alias.get('songId')),"songId":song_alias.get('songId')})
                     self.ap.logger.info(f"别名匹配结果：{matched_songs}")
                     # 在data.json中模糊搜索
-                    matched_songs.extend(self.fuzzySearch(song_name, songs))
+                    matched_songs.extend(self.songFuzzySearch(song_name, songs))
                     self.ap.logger.info(f"模糊匹配+别名匹配结果：{matched_songs}")
                 matched_songs = {json.dumps(d, sort_keys=True): d for d in matched_songs}   # 去重
                 matched_songs = list(matched_songs.values())
@@ -188,6 +191,98 @@ class ChunithmUtilPlugin(BasePlugin):
                 "50j": int(_9000_max_attack_num_50),
             }
         })    
+    
+    def getArtists(self, songs: list):
+        return list(set([song.get('artist') for song in songs]))
+    
+    def getNoteDesigners(self, songs: list):
+        return list(set([diff.get('noteDesigner') for song in songs for diff in song.get('sheets')]))
+    
+    def getSongsByArtist(self, artist: str, songs: list):
+        songs_by_artist = []
+        for song in songs:
+            if song.get('artist') == artist:
+                songs_by_artist.append(song)
+        return songs_by_artist
+    
+    def getSheetsByNoteDesigner(self, note_designer: str, songs: list) -> dict:
+        '''
+        return:
+            谱师的歌曲-难度列表
+            {
+                
+                "歌曲": [
+                    bas,
+                    adv,
+                    exp,
+                    mas,
+                    ult
+                ]
+                ,
+                ...
+            }
+        '''
+        sheets_by_note_designer = {}
+        for song in songs:
+            for sheet in song.get('sheets'):
+                if sheet.get('noteDesigner') != note_designer:
+                    continue
+                if song.get('songId') not in sheets_by_note_designer.keys():
+                    sheets_by_note_designer[song.get('songId')] = [
+                            sheet.get('difficulty')
+                        ]
+                else:
+                    sheets_by_note_designer[song.get('songId')].append(sheet.get('difficulty'))
+        return sheets_by_note_designer
+    
+    def getArtistsSongs(self, songs: list):
+        '''
+        return:
+            曲师-歌曲列表
+        '''
+        artists = []    # 曲师列表
+        for song in songs:
+            if song.get('artist') not in artists:
+                artists.append({
+                    song.get('artist'): [
+                        song.get('songId')
+                    ]
+                })
+            else:
+                artists[song.get('artist')].append(song.get('songId'))
+        return artists
+    
+    def getNoteDesignersSongs(self, songs: list):
+        '''
+        return:
+            谱师-歌曲-难度列表
+        '''
+        note_designers = []    # 谱师列表
+        for song in songs:
+            for diff in song.get('sheets'):
+                if diff.get('noteDesigner') not in note_designers:
+                    note_designers.append({
+                        diff.get('noteDesigner'): [{
+                            song.get('songId'):[diff.get('difficulty')]
+                        }]
+                    })
+                else:
+                    note_designers[diff.get('noteDesigner')][song.get('songId')].append(diff.get('difficulty'))
+    
+    def generalFuzzySearch(self, query: str, searchlist: list):
+        if None in searchlist:
+            searchlist.remove(None)
+        lowercase_searchlist = [item.lower() for item in searchlist]
+        # 精准搜索
+        if query.lower() in lowercase_searchlist:
+            return [searchlist[lowercase_searchlist.index(query.lower())]]
+        # 模糊搜索
+        results = difflib.get_close_matches(query.lower(), lowercase_searchlist, n=15, cutoff=0.8)
+        # 子串匹配
+        for item in searchlist:
+            if query in item.lower():
+                results.append(item)
+        return results          
     
     # 异步初始化
     async def initialize(self):
@@ -595,6 +690,60 @@ class ChunithmUtilPlugin(BasePlugin):
                             ]))
                         else:
                             self.ap.logger.info("两张图片尺寸不同，无法拼接！")
+                case "chu曲师 [曲师名]":
+                    target_artist = re.search(r"^chu(曲师| qs) (.+)$", msg).group(2)
+                    self.ap.logger.info(f"chu曲师查询：{target_artist}")
+                    songs = []  # 歌曲列表
+                    matched_artists = [] # 匹配到的曲师列表
+                    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.getenv("SONG_PATH")), "r", encoding="utf-8") as file:
+                        songs = json.load(file).get("songs")
+                    matched_artists = self.generalFuzzySearch(target_artist, self.getArtists(songs))
+                    if len(matched_artists) == 0:
+                        await ctx.reply(MessageChain([Plain(f"没有找到{target_artist}，请尝试输入曲师全称")]))
+                        return
+                    elif len(matched_artists) == 1:
+                        artist_name = matched_artists[0]
+                        songs_by_artist = self.getSongsByArtist(artist_name, songs)
+                        msg_chain = MessageChain([Plain(f"曲师 - {artist_name}作品列表：\n")])
+                        for song in songs_by_artist:
+                            msg_chain.append(Plain(f"· c{songs.index(song)} - {song.get('songId')}\n"))
+                        await ctx.reply(msg_chain)
+                    else:
+                        msg_chain = MessageChain([Plain(f"有多个曲师符合条件\n")])
+                        for artist in matched_artists:
+                            msg_chain.append(Plain(f"· {artist}\n"))
+                        msg_chain.append(Plain(f"\n请使用“chu曲师 [曲师全名]”进行查询"))
+                        await ctx.reply(msg_chain)
+                    return
+                case "chu谱师 [谱师名]":
+                    target_note_designer = re.search(r"^chu(谱师| ps) (.+)$", msg).group(2)
+                    self.ap.logger.info(f"chu谱师查询：{target_note_designer}")
+                    songs = []  # 歌曲列表
+                    matched_note_designers = [] # 匹配到的谱师列表
+                    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.getenv("SONG_PATH")), "r", encoding="utf-8") as file:
+                        songs = json.load(file).get("songs")
+                    matched_note_designers = self.generalFuzzySearch(target_note_designer, self.getNoteDesigners(songs))
+                    if len(matched_note_designers) == 0:
+                        await ctx.reply(MessageChain([Plain(f"没有找到{target_note_designer}，请尝试输入谱师全称")]))
+                        return
+                    elif len(matched_note_designers) == 1:
+                        note_designer_name = matched_note_designers[0]
+                        sheets_by_note_designer = self.getSheetsByNoteDesigner(note_designer_name, songs)
+                        msg_chain = MessageChain([Plain(f"谱师 - {note_designer_name}谱面列表：\n")])
+                        if len(sheets_by_note_designer) > 20:
+                            await ctx.reply(MessageChain([Plain(f"谱面过多，仅展示前20首歌曲")]))
+                        for songId, difficulties in islice(sheets_by_note_designer.items(), min(len(sheets_by_note_designer), 20)):
+                            msg_chain.append(Plain(f"· {songId}\n\t"))
+                            msg_chain.append(Plain("-".join(difficulties)))
+                            msg_chain.append(Plain("\n"))
+                        await ctx.reply(msg_chain)
+                    else:
+                        msg_chain = MessageChain([Plain(f"有多个谱师符合条件\n")])
+                        for note_designer in matched_note_designers:
+                            msg_chain.append(Plain(f"· {note_designer}\n"))
+                        msg_chain.append(Plain(f"\n请使用“chu谱师 [谱师全名]”进行查询"))
+                        await ctx.reply(msg_chain)
+                    return
                 case _:
                     pass
                         
