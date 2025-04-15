@@ -4,7 +4,7 @@
 
 <div align="center">
 
-<img src="./images/icon.png" style="width:85%">
+<img src="./images/icon_border_radius.png" style="width:90%">
 
 </div>
 
