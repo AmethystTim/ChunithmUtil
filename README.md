@@ -2,7 +2,19 @@
 
 <h4 align="center">集成了多项Chunithm实用功能的LangBot插件🧩</h4>
 
-![ChunithmUtil](./images/icon.png)
+<div align="center">
+
+<img src="./images/icon.png" style="width:85%">
+
+</div>
+
+## 介绍🤔
+
+《CHUNITHM》是一款由SEGA开发的街机音乐游戏。其主要玩法为配合音乐节奏，通过触碰键盘或抬手以进行相应操作。CHUNITHM于2015年7月16日在日本开始运营。游戏内置多首乐曲并配有不同难度的谱面供玩家游玩。
+
+> 引自萌娘百科，阅读更多：[https://zh.moegirl.org.cn/CHUNITHM](https://zh.moegirl.org.cn/CHUNITHM)
+
+本插件旨在降低游玩Chunithm的门槛，为玩家提供多项Chunithm相关的实用功能，以更好地提升自身游玩技术。
 
 ## 特性✨
 
@@ -58,10 +70,26 @@ python utils/mapping.py     # 获取谱面ID-歌曲的映射表
 
 > 新版本更新后，重新运行指令以获取新曲数据
 
+## 指令🤖
+
+|指令|描述|参数|
+|---|---|---|
+|[歌名]是什么歌|模糊搜索歌曲|歌名|
+|chu查歌[歌名]|精准搜索cid对应歌曲|歌名/cid|
+|chu随机一曲|随机获取一首曲目|-|
+|alias [cid] [别名1,别名2,…]|为曲目添加别名|cid, 别名1, 别名2, …|
+|别名[cid]|查询歌曲别名|cid|
+|chuchart [歌曲id/别名] [难度]|获取指定曲目谱面预览|歌曲id/别名, 难度(exp/mas/ult)|
+|chu lv [定数]|获取指定定数的所有曲目|难度定数|
+|chu容错 [cid/别名] [难度]|计算指定曲目达成鸟/鸟加的容错|cid/别名, 难度(exp/mas/ult)|
+|chu曲师 [曲师名]|获取指定曲师的所有曲目|曲师名|
+|chu谱师 [谱师名]|获取指定谱师的所有曲目|谱师名|
+
+
 ## 数据源
 
 - 歌曲元数据：[data.json](https://dp4p6x0xfi5o9.cloudfront.net/chunithm/data.json)
-- Chunithm谱面保管室：[https://sdvx.in](https://sdvx.in)
+- Chunithm谱面保管室：[https://sdvx.in/chunithm.html](https://sdvx.in/chunithm.html)
 
 ## 鸣谢
 
