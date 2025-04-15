@@ -10,6 +10,10 @@ json_path2 = os.path.join(os.path.dirname(__file__), '../data', 'chartId2Gen.jso
 chartid2name = {}   # 存放id和歌曲名的映射表
 chartid2gen = {}    # 存放id和版本号的映射表
 level_list = [
+    '11',
+    '11+',
+    '12',
+    '12+',
     '13',
     '13+',
     '14',
