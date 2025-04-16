@@ -280,7 +280,7 @@ class ChunithmUtilPlugin(BasePlugin):
         results = difflib.get_close_matches(query.lower(), lowercase_searchlist, n=15, cutoff=0.8)
         # 子串匹配
         for item in searchlist:
-            if query in item.lower():
+            if query.lower() in item.lower():
                 results.append(item)
         return results          
     
