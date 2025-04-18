@@ -33,6 +33,7 @@ class ChunithmUtilPlugin(BasePlugin):
             "ult": 4,
         }
         self.instructions = {
+            "chu help": r"^chu help$",
             "chu查歌[歌名]": r"^chu查歌\s*(.+)$",
             "chu随机一曲": r"^chu随机[一曲]*$",
             "添加别名|alias [歌曲id] [别名1],[别名2],...": r"(^添加别名|alias) (c\d+)\s+((?:[^,，]+[,，]?)+)$",
@@ -83,6 +84,14 @@ class ChunithmUtilPlugin(BasePlugin):
         return results
     
     def getChartID(self, song):
+        '''
+        获取谱面ID
+        
+        args:
+            song: 歌曲字典
+        return:
+            谱面ID
+        '''
         with open(os.path.join(os.path.dirname(__file__), os.getenv("ID2NAME_PATH")), "r", encoding="utf-8") as f:
             f = json.load(f)
             res = difflib.get_close_matches(song['songId'], f.values(), n=15, cutoff=0.9)
@@ -92,11 +101,29 @@ class ChunithmUtilPlugin(BasePlugin):
         return None
     
     def getChartGen(self, chartID):
+        '''
+        获取谱面版本ID
+        
+        args:
+            chartID: 谱面ID
+        return:
+            谱面版本ID
+        '''
         with open(os.path.join(os.path.dirname(__file__), os.getenv("ID2GEN_PATH")), "r", encoding="utf-8") as f:
             f = json.load(f)
             return f.get(chartID)
     
     def concatChartUrl(self, chartID, gen, diff = "mas"):
+        '''
+        拼接谱面URL
+        
+        args:
+            chartID: 谱面ID
+            gen: 谱面版本ID
+            diff: 难度
+        return:
+            谱面URL, 背景URL, 小节URL
+        '''
         charturl = os.getenv("CHART_URL")
         bgurl = os.getenv("CHART_BG_URL")
         barurl = os.getenv("CHART_BAR_URL")
@@ -116,6 +143,15 @@ class ChunithmUtilPlugin(BasePlugin):
         return charturl, bgurl, barurl
     
     def checkChartCache(self, chartid, difficulty):
+        '''
+        检查谱面缓存是否存在缓存
+        
+        args:
+            chartid: 谱面ID
+            difficulty: 难度
+        return:
+            缓存是否存在
+        '''
         return os.path.exists(os.path.join(chart_cache_dir, f'{chartid}_{"" if difficulty == "mas" else difficulty}.png'))
     
     async def searchSong(self, ctx: EventContext, song_name: str) -> list:
@@ -743,6 +779,21 @@ class ChunithmUtilPlugin(BasePlugin):
                             msg_chain.append(Plain(f"· {note_designer}\n"))
                         msg_chain.append(Plain(f"\n请使用“chu谱师 [谱师全名]”进行查询"))
                         await ctx.reply(msg_chain)
+                    return
+                case "chu help":
+                    await ctx.reply(MessageChain([
+                        Plain("chu help - 查看帮助"),
+                        Plain("[别名]是什么歌 - 别名查找歌曲"),
+                        Plain("chu查歌 [歌曲全名/cid] - 精准查找歌曲"),
+                        Plain("alias [歌曲cid] [别名1，别名2，...] - 为歌曲添加别名"),
+                        Plain("别名 [歌曲cid] - 查看指定歌曲所有别名"),
+                        Plain("chu随机一曲 - 随机一首歌"),
+                        Plain("chu lv [定数] - 查看指定定数所有歌曲"), 
+                        Plain("chu 容错 [歌曲cid/别名] [难度] - 容错计算"),
+                        Plain("chuchart [歌曲cid/别名] [难度] - 查看谱面"),
+                        Plain("chu曲师 [曲师名] - 查看曲师作品"),
+                        Plain("chu谱师 [谱师名] - 查看谱师谱面"),
+                    ]))
                     return
                 case _:
                     pass
