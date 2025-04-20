@@ -8,6 +8,7 @@ import os
 import json
 import dotenv
 import difflib
+import subprocess
 import PIL
 from io import BytesIO
 from itertools import islice
@@ -19,12 +20,17 @@ from pkg.platform.types.message import Image as image_langbot
 dotenv.load_dotenv()
 cover_cache_dir = os.path.join(os.path.dirname(__file__), './cache/covers')
 chart_cache_dir = os.path.join(os.path.dirname(__file__), './cache/charts')
+utils_dir = os.path.join(os.path.dirname(__file__), 'utils')
 
 # 注册插件
 @register(name="ChunithmUtil", description="学习下正则查歌", version="1.0", author="Amethyst")
 class ChunithmUtilPlugin(BasePlugin):
     # 插件加载时触发
     def __init__(self, host: APIHost):
+        host.ap.logger.info("[ChunithmUtil] 更新歌曲元数据与映射表...")
+        subprocess.run(["python", os.path.join(utils_dir, "songmeta.py")], capture_output=True, text=True)
+        subprocess.run(["python", os.path.join(utils_dir, "mapping.py")], capture_output=True, text=True)
+        host.ap.logger.info("[ChunithmUtil] 歌曲元数据与映射表更新完成")
         self.forward_message = forward_message(host="127.0.0.1", port=3000)
         self.diff2index = {
             "adv": 1,
