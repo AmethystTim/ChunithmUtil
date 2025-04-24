@@ -365,6 +365,28 @@ class ChunithmUtilPlugin(BasePlugin):
                         msg_chain.append(Plain(f"\n请使用“chu查歌 [歌曲ID]”进行精准查询"))
                         await ctx.reply(msg_chain)
                     else:
+                        # 尝试搜索sega新曲列表
+                        with open(os.path.join(os.path.dirname(__file__), os.getenv("SEGA_SONG_PATH")), "r", encoding="utf-8") as f:
+                            sega_songs = json.load(f)
+                            matched_songs = self.generalFuzzySearch(song_name, [sega_songs.get('title') for sega_songs in sega_songs])
+                            if len(matched_songs) == 1:
+                                matched_song = [song for song in sega_songs if song.get('title') == matched_songs[0]][0]
+                                response = requests.get(os.getenv('SEGA_COVER_URL') + matched_song.get('image'))
+                                if response.status_code == 200:
+                                    with open(os.path.join(cover_cache_dir, matched_song.get('image')), 'wb') as f:
+                                        f.write(response.content)
+                                img = await image_langbot.from_local(os.path.join(cover_cache_dir, matched_song.get('image')))
+                                await ctx.reply(MessageChain([
+                                    Plain(f"新曲 - {matched_song.get('title')}\n"),
+                                    Plain(f"by {matched_song.get('artist')}\n"),
+                                    Plain(f"Basic {matched_song.get('lev_bas')}\n"),
+                                    Plain(f"Advanced {matched_song.get('lev_adv')}\n"),
+                                    Plain(f"Expert {matched_song.get('lev_exp')}\n"),
+                                    Plain(f"Master {matched_song.get('lev_mas')}\n"),
+                                    Plain(f"Ultima {matched_song.get('lev_ult', '-')}" if matched_song.get('lev_ult')!="" else ""),
+                                    img,
+                                ]))
+                                return
                         await ctx.reply(MessageChain([Plain("没有找到该歌曲，试着输入歌曲全称")]))
                         return
                 case "chu随机一曲":
