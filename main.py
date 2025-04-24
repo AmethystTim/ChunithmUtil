@@ -1,4 +1,3 @@
-import PIL.Image
 from pkg.plugin.context import register, handler, BasePlugin, APIHost, EventContext
 from pkg.plugin.events import *  # 导入事件类
 from pkg.platform.types import *
@@ -352,7 +351,7 @@ class ChunithmUtilPlugin(BasePlugin):
                         if 0 <= song_index < len(songs):
                             song = songs[song_index]
                             checkIsHit(os.getenv('COVER_URL'), song.get('imageName'))
-                            img_conponent = await Image.from_local(os.path.join(cover_cache_dir, song.get('imageName')))
+                            img_conponent = await image_langbot.from_local(os.path.join(cover_cache_dir, song.get('imageName')))
                             msg_chain = MessageChain([Plain(f"c{song_index} - {song.get('title')}\nby {song.get('artist')}")])
                             for sheet in song.get('sheets'):
                                 msg_chain.append(Plain(f"\n{str(sheet.get('difficulty')).capitalize()} {sheet.get('internalLevelValue')}"))
@@ -373,7 +372,7 @@ class ChunithmUtilPlugin(BasePlugin):
                         songs = json.load(file).get("songs")
                         song = random.choice(songs)
                         checkIsHit(os.getenv('COVER_URL'), song.get('imageName'))
-                        img_conponent = await Image.from_local(os.path.join(cover_cache_dir, song.get('imageName')))
+                        img_conponent = await image_langbot.from_local(os.path.join(cover_cache_dir, song.get('imageName')))
                         msg_chain = MessageChain([Plain(f"{song.get('title')}\nby {song.get('artist')}")])
                         for sheet in song.get('sheets'):
                             msg_chain.append(Plain(f"\n{str(sheet.get('difficulty')).capitalize()} {sheet.get('internalLevelValue')}"))
@@ -386,7 +385,7 @@ class ChunithmUtilPlugin(BasePlugin):
                         for song in songs:  # 查songId
                             if song.get('songId') == song_name:
                                 checkIsHit(os.getenv('COVER_URL'), song.get('imageName'))
-                                img_conponent = await Image.from_local(os.path.join(cover_cache_dir, song.get('imageName')))
+                                img_conponent = await image_langbot.from_local(os.path.join(cover_cache_dir, song.get('imageName')))
                                 msg_chain = MessageChain([Plain(f"c{songs.index(song)} - {song.get('title')}\nby {song.get('artist')}")])
                                 for sheet in song.get('sheets'):
                                     msg_chain.append(Plain(f"\n{str(sheet.get('difficulty')).capitalize()} {sheet.get('internalLevelValue')}"))
@@ -398,7 +397,7 @@ class ChunithmUtilPlugin(BasePlugin):
                             if 0 <= song_index < len(songs):
                                 song = songs[song_index]
                                 checkIsHit(os.getenv('COVER_URL'), song.get('imageName'))
-                                img_conponent = await Image.from_local(os.path.join(cover_cache_dir, song.get('imageName')))
+                                img_conponent = await image_langbot.from_local(os.path.join(cover_cache_dir, song.get('imageName')))
                                 msg_chain = MessageChain([Plain(f"{song_name} - {song.get('title')}\nby {song.get('artist')}")])
                                 for sheet in song.get('sheets'):
                                     msg_chain.append(Plain(f"\n{str(sheet.get('difficulty')).capitalize()} {sheet.get('internalLevelValue')}"))
@@ -599,9 +598,8 @@ class ChunithmUtilPlugin(BasePlugin):
                     with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.getenv("SONG_PATH")), "r", encoding="utf-8") as file:
                         songs = json.load(file).get("songs")
                     song = None # 目标歌曲
-                    
-                    song_name = re.search(r"^chu容错 (c\d+|[^ ]+)(?: (exp|mas|ult))?$", msg).group(1)
-                    difficulty = re.search(r"^chu容错 (c\d+|[^ ]+)(?: (exp|mas|ult))?$", msg).group(2)
+                    song_name = re.search(r"^chu容错 (c\d+|.+?)(?: (exp|mas|ult))?$", msg).group(1)
+                    difficulty = re.search(r"^chu容错 (c\d+|.+?)(?: (exp|mas|ult))?$", msg).group(2)
                     if difficulty == None:
                         difficulty = "mas"
                         
@@ -650,7 +648,7 @@ class ChunithmUtilPlugin(BasePlugin):
                     self.ap.logger.info(f"chuchart查歌：{song_name} - {difficulty}")
                     matched_songs = await self.searchSong(ctx, song_name)
                     
-                    if len(matched_songs) == 1:   # 只有一个符合直接返回
+                    if len(matched_songs) == 1:   # 只有一个符合
                         song_index = int(matched_songs[0].get('id'))
                         song = songs[song_index]
                     elif len(matched_songs) == 0:
