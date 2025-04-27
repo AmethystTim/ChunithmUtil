@@ -2,6 +2,7 @@ cache/charts/*
 cache/covers/*
 cache/others/*
 data/*
+test/*
 
 !cache/charts/.gitkeep
 !cache/covers/.gitkeep
