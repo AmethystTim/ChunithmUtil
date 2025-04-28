@@ -18,17 +18,11 @@ from .src.query_level import *
 
 from .src.utils.argsparser import *
 
-dotenv.load_dotenv()
-utils_dir = os.path.join(os.path.dirname(__file__), 'src', 'utils')
-
 # 注册插件
 @register(name="ChunithmUtil", description="集成多项Chunithm实用功能的LangBot插件🧩", version="1.1", author="Amethyst")
 class ChunithmUtilPlugin(BasePlugin):
     # 插件加载时触发
     def __init__(self, host: APIHost):
-        # subprocess.run(["python", os.path.join(utils_dir, "songmeta.py")], capture_output=True, text=True)
-        # subprocess.run(["python", os.path.join(utils_dir, "mapping.py")], capture_output=True, text=True)
-        
         self.instructions = {
             "chu help": 
                 r"^chu help$",
@@ -52,7 +46,7 @@ class ChunithmUtilPlugin(BasePlugin):
                 r"^chu(?:谱师| ps) (.+)$",
         }
     
-    def matchPattern(self, msg):
+    def matchPattern(self, msg) -> str:
         '''匹配指令
         
         Args:
@@ -71,7 +65,6 @@ class ChunithmUtilPlugin(BasePlugin):
         pass
         
     @handler(GroupMessageReceived)
-    @handler(PersonMessageReceived)
     async def msg_received(self, ctx: EventContext):
         msg = str(ctx.event.message_chain).strip()
         instruction = self.matchPattern(msg)
