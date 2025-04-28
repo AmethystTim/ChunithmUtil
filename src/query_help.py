@@ -21,4 +21,5 @@ async def queryHelp(ctx: EventContext) -> None:
         Plain("chuchart [歌曲cid/别名] [难度] - 查看谱面\n"),
         Plain("chu曲师 [曲师名] - 查看曲师作品\n"),
         Plain("chu谱师 [谱师名] - 查看谱师谱面\n"),
+        Plain("chu update - 更新曲目、谱面信息\n"),
     ]))

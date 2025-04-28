@@ -15,6 +15,7 @@ from .src.query_tolerance import *
 from .src.query_aritst import *
 from .src.query_notedesigner import *
 from .src.query_level import *
+from .src.query_update import *
 
 from .src.utils.argsparser import *
 
@@ -44,6 +45,8 @@ class ChunithmUtilPlugin(BasePlugin):
                 r"^chu(?:曲师| qs) (.+)$",
             "chu谱师 [谱师名]": 
                 r"^chu(?:谱师| ps) (.+)$",
+            "chu update":
+                r"^chu update$",
         }
     
     def matchPattern(self, msg) -> str:
@@ -97,6 +100,9 @@ class ChunithmUtilPlugin(BasePlugin):
                 
             case "chu谱师 [谱师名]":
                 await queryNoteDesigner(ctx, parseArgs(self.instructions[instruction], msg))
+            
+            case "chu update":
+                await queryUpdate(ctx, parseArgs(self.instructions[instruction], msg))
             
             case "chu help":
                 await queryHelp(ctx)

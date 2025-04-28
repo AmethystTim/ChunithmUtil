@@ -22,7 +22,7 @@ level_list = [
     '15+',
 ]
 
-if __name__ == '__main__':
+def mapping():
     for level in level_list:
         url = base_url.replace('$$', level)
         print('正在爬取', level, '级曲目...')
@@ -53,3 +53,6 @@ if __name__ == '__main__':
         write_str = json.dumps(chartid2gen, ensure_ascii=False, indent=4)
         f.write(write_str)
         print('写入chartId2Gen.json文件成功')
+
+if __name__ == '__main__':
+    mapping()
