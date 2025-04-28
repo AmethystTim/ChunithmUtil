@@ -26,7 +26,7 @@ async def queryNoteDesigner(ctx: EventContext, args: list) -> None:
     matched_note_designers = [] # 匹配到的谱师列表
     target_note_designer, = args
     
-    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.getenv("SONG_PATH")), "r", encoding="utf-8") as file:
+    with open(SONGS_PATH, "r", encoding="utf-8") as file:
         songs = json.load(file).get("songs")
     
     searcher = Searcher()

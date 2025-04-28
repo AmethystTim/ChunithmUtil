@@ -47,9 +47,9 @@ class ChunithmUtilPlugin(BasePlugin):
             "chuchart [歌曲id/别名] [难度]": 
                 r"^chuchart (c\d+|.+?)(?: (exp|mas|ult))?$",
             "chu曲师 [曲师名]" : 
-                r"^chu(?:^曲师| qs) (.+)$",
+                r"^chu(?:曲师| qs) (.+)$",
             "chu谱师 [谱师名]": 
-                r"^chu(?:^谱师| ps) (.+)$",
+                r"^chu(?:谱师| ps) (.+)$",
         }
     
     def matchPattern(self, msg):

@@ -9,7 +9,7 @@ test/*
 !cache/others/.gitkeep
 !data/alias.json
 
-utils/__pycache__
+test/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
