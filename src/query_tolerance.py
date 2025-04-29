@@ -24,14 +24,14 @@ async def queryTolerance(ctx: EventContext, args: list) -> None:
     song_name, difficulty = args
     
     songs = []
-    
+    song = None
     with open(SONGS_PATH, "r", encoding="utf-8") as file:
         songs = json.load(file).get("songs")
     
     if difficulty == None:  # 默认mas
         difficulty = "mas"
 
-    matched_songs = searchSong(ctx, song_name)
+    matched_songs = searchSong(song_name)
     
     if len(matched_songs) == 1:
         song = [song for song in songs if song.get('songId') == matched_songs[0]][0]
@@ -58,7 +58,7 @@ async def queryTolerance(ctx: EventContext, args: list) -> None:
         await ctx.reply(MessageChain([Plain(f"未知难度")]))
         return
     
-    tolerance = songutil.calcTolerance(song['sheets'][index])
+    tolerance = songutil.calcTolerance(song, difficulty)
     await ctx.reply(MessageChain([
         Plain(f'歌曲 - {song.get("songId")} - {difficulty}难度容错：\n'),
         Plain(f'鸟容错\n100小j：{tolerance["1007500"]["100j"]}个attack\n50小j：{tolerance["1007500"]["50j"]}个attack\n'),
