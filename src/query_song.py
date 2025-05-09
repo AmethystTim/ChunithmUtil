@@ -81,9 +81,14 @@ async def querySong(ctx: EventContext, args: list) -> None:
         songutil.checkIsHit(os.getenv('COVER_URL'), song.get('imageName'))
         
         img_conponent = await Image.from_local(os.path.join(COVER_CACHE_DIR, song.get('imageName')))
-        msg_chain = MessageChain([Plain(f"c{song_index} - {song.get('title')}\nby {song.get('artist')}")])
-        for sheet in song.get('sheets'):
-            msg_chain.append(Plain(f"\n{str(sheet.get('difficulty')).capitalize()} {sheet.get('internalLevelValue')}"))
+        msg_chain = MessageChain([Plain(f"c{song_index} - {song.get('title')}\n")]) 
+        msg_chain.append(Plain(f"曲师: {song.get('artist')}\n"))
+        msg_chain.append(Plain(f"分类：{song.get('category')}\n"))
+        msg_chain.append(Plain(f"追加版本: {song.get('version')}\n"))
+        msg_chain.append(Plain(f"发行日期: {song.get('releaseDate')}\n"))
+        msg_chain.append(Plain(f"定数: "))
+        rating_list = [str(sheet.get('internalLevelValue')) for sheet in song.get('sheets')]
+        msg_chain.append(Plain(f"{' / '.join(rating_list)}\n"))
         msg_chain.append(img_conponent)
         await ctx.reply(msg_chain)
         return

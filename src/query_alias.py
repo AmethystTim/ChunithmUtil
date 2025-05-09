@@ -71,13 +71,13 @@ async def queryGetAlias(ctx: EventContext, args: list) -> None:
     id, = args
     
     matched_songs = searchSong(id)
+    songs = []
+    with open(SONGS_PATH, 'r', encoding='utf-8') as f:
+        songs = json.load(f).get('songs')
     if len(matched_songs) == 0:
         await ctx.reply(MessageChain([Plain("未找到该歌曲，试着输入歌曲全称或其他别名")]))
         return
     elif len(matched_songs) > 1:
-        songs = []
-        with open(SONGS_PATH, 'r', encoding='utf-8') as f:
-            songs = json.load(f).get('songs')
         msg_chain = MessageChain([Plain(f"有多个曲目符合条件\n")])
         for songId in matched_songs:
             song_index = songs.index([song for song in songs if song.get('songId') == songId][0])
@@ -85,7 +85,9 @@ async def queryGetAlias(ctx: EventContext, args: list) -> None:
         msg_chain.append(Plain(f"\n请使用cid进行精准查询"))
         await ctx.reply(msg_chain)
         return
+    
     songId = matched_songs[0]
+    song_index = songs.index([song for song in songs if song.get('songId') == songId][0])
     
     alias_json_songs = []
     with open(ALIAS_PATH, 'r', encoding='utf-8') as f:
@@ -94,10 +96,10 @@ async def queryGetAlias(ctx: EventContext, args: list) -> None:
     songutil = SongUtil()
     aliases = songutil.getAlias(songId, alias_json_songs)
     if len(aliases) == 0:
-        await ctx.reply(MessageChain([Plain(f"歌曲{songId}暂无别名")]))
+        await ctx.reply(MessageChain([Plain(f"c{song_index} - {songId}暂无别名")]))
         return
     
-    msg_chain = MessageChain([Plain(f"歌曲{songId}的别名：")])
+    msg_chain = MessageChain([Plain(f"c{song_index} - {songId}的别名：")])
     for alias in aliases:
         msg_chain.append(Plain(f"\n· {alias}"))
     await ctx.reply(msg_chain)
