@@ -46,7 +46,7 @@ async def queryChart(ctx: EventContext, args: list) -> None:
         for songId in matched_songs:
             song_index = songs.index([song for song in songs if song.get('songId') == songId][0])
             msg_chain.append(Plain(f"c{song_index} - {songId}\n"))
-        msg_chain.append(Plain(f"\n请使用“chu容错 [cid]”进行容错计算"))
+        msg_chain.append(Plain(f"\n请使用“chuchart [cid]”进行谱面查询"))
         await ctx.reply(msg_chain)
         return
     
