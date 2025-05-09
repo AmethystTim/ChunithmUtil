@@ -102,14 +102,19 @@ class ChartUtil:
                 img = PIL.Image.open(BytesIO(res.content)).convert("RGBA")
                 imgs.append(img)
             img1, img2, img3 = imgs
-            if img1.size == img2.size and img1.size == img3.size:
-                width, height = img1.size
-                new_image = PIL.Image.new("RGBA", (width, height), color = (0, 0, 0, 255))
-                new_image = PIL.Image.alpha_composite(new_image, img2)
-                new_image = PIL.Image.alpha_composite(new_image, img1)
-                new_image = PIL.Image.alpha_composite(new_image, img3)
-                
-                save_path = os.path.join(CHART_CACHE_DIR, f'{chartid}_{"" if difficulty == "mas" else difficulty}.png')
-                new_image.save(save_path)
-            else:
-                print("[ChunithmUtil] 两张图片尺寸不同，无法拼接！")
+            if not (img1.size == img2.size == img3.size):   # 以最小宽高为准裁剪图片
+                min_width = min(img1.size[0], img2.size[0], img3.size[0])
+                min_height = min(img1.size[1], img2.size[1], img3.size[1])
+                img1 = img1.crop((0, 0, min_width, min_height))
+                img2 = img2.crop((0, 0, min_width, min_height))
+                img3 = img3.crop((0, 0, min_width, min_height))
+            
+            width, height = img1.size
+            new_image = PIL.Image.new("RGBA", (width, height), color = (0, 0, 0, 255))
+            
+            new_image = PIL.Image.alpha_composite(new_image, img2)
+            new_image = PIL.Image.alpha_composite(new_image, img1)
+            new_image = PIL.Image.alpha_composite(new_image, img3)
+            
+            save_path = os.path.join(CHART_CACHE_DIR, f'{chartid}_{"" if difficulty == "mas" else difficulty}.png')
+            new_image.save(save_path)
