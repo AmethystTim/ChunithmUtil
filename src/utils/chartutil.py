@@ -116,5 +116,7 @@ class ChartUtil:
             new_image = PIL.Image.alpha_composite(new_image, img1)
             new_image = PIL.Image.alpha_composite(new_image, img3)
             
+            new_image = new_image.resize((int(width * 0.4), int(height * 0.4)), PIL.Image.ANTIALIAS)
+            
             save_path = os.path.join(CHART_CACHE_DIR, f'{chartid}_{"" if difficulty == "mas" else difficulty}.png')
             new_image.save(save_path)

@@ -1,5 +1,6 @@
 import difflib
 import json
+import re
 
 class Searcher:
     def __init__(self):
@@ -29,6 +30,8 @@ class Searcher:
         
         # 2.2 子串匹配
         for item in searchlist:
+            if re.fullmatch('[A-Za-z]+', query) and len(query) <= 1:
+                continue
             if query.lower() in item.lower():
                 results.append(item)
         
