@@ -41,13 +41,15 @@ def searchSong(song_name: str) -> list[str]:
         matched_songs.append(song.get('songId'))
         return matched_songs
     
-    # 2.1 别名搜索 
+    # 2. 别名搜索 
     for song in alias_json_songs:
         for alias in song.get('aliases'):
             if alias == song_name:  # 别名采用精准匹配
                 matched_songs.append(song.get('songId'))
+    if len(matched_songs) > 0:  # 别名存在，直接返回
+        return matched_songs
     
-    # 2.2 模糊搜索
+    # 3. 模糊搜索
     searcher = Searcher()
     songId_list = [song.get('songId') for song in songs]
     fuzzy_searchresult = searcher.generalFuzzySearch(song_name, songId_list)
