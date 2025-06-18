@@ -60,7 +60,7 @@ async def queryTolerance(ctx: EventContext, args: list) -> None:
     
     tolerance = songutil.calcTolerance(song, difficulty)
     await ctx.reply(MessageChain([
-        Plain(f'歌曲 - {song.get("songId")} - {difficulty}难度容错：\n'),
-        Plain(f'鸟容错\n100小j：{tolerance["1007500"]["100j"]}个attack\n50小j：{tolerance["1007500"]["50j"]}个attack\n'),
-        Plain(f'鸟加容错\n100小j：{tolerance["1009000"]["100j"]}个attack\n50小j：{tolerance["1009000"]["50j"]}个attack')
+        Plain(f'歌曲 - {song.get("songId")}\n难度 - {difficulty}\n'),
+        Plain(f'· 鸟容错\n100小j：{tolerance["1007500"]["100j"]}个attack\n50小j：{tolerance["1007500"]["50j"]}个attack\n'),
+        Plain(f'· 鸟加容错\n100小j：{tolerance["1009000"]["100j"]}个attack\n50小j：{tolerance["1009000"]["50j"]}个attack')
     ]))
