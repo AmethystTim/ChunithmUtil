@@ -62,6 +62,9 @@ async def queryChart(ctx: EventContext, args: list) -> None:
 
     chartutil = ChartUtil()
     chartid = chartutil.getChartID(song)
+    if chartid == None:
+        await ctx.reply(MessageChain([Plain(f"未找到歌曲对应谱面，可能是内部错误或数据未更新")]))
+        return
     chartutil.checkIsHit(chartid, difficulty)
     
     local_path = os.path.join(CHART_CACHE_DIR, f"{chartid}_{'' if difficulty == 'mas' else difficulty}.png")
