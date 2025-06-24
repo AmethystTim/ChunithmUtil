@@ -38,9 +38,9 @@ class ChunithmUtilPlugin(BasePlugin):
             "别名[歌曲id|歌曲别名]": 
                 r"^别名\s*(.+)$",
             "chu lv [难度]": 
-                r"^chu lv (\S+)$",
+                r"^chu\s?lv\s?(\S+)$",
             "chu容错 [歌曲id/别名] [难度]": 
-                r"^chu容错 (c\d+|.+?)(?: (exp|mas|ult))?$",
+                r"^(?:chu容错|churc)\s?(c\d+|.+?)(?: (exp|mas|ult))?$",
             "chuchart [歌曲id/别名] [难度]": 
                 r"^chuchart\s?(c\d+|.+?)(?: (exp|mas|ult))?$",
             "chu曲师 [曲师名]" : 
