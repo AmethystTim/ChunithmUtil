@@ -1,6 +1,7 @@
 import os
 import json
 import dotenv
+import asyncio
 
 from pkg.plugin.context import EventContext
 from pkg.plugin.events import *  # 导入事件类
@@ -25,6 +26,7 @@ async def queryChart(ctx: EventContext, args: list) -> None:
         None: 无返回值
     '''
     songs = []
+    song = {}
     song_name, difficulty = args
     
     with open(SONGS_PATH, "r", encoding="utf-8") as file:
@@ -65,22 +67,23 @@ async def queryChart(ctx: EventContext, args: list) -> None:
     if chartid == None:
         await ctx.reply(MessageChain([Plain(f"未找到歌曲对应谱面，可能是内部错误或数据未更新")]))
         return
-    chartutil.checkIsHit(chartid, difficulty)
-    
-    local_path = os.path.join(CHART_CACHE_DIR, f"{chartid}_{'' if difficulty == 'mas' else difficulty}.png")
-    try:
-        img_conponent = await Image.from_local(local_path)
-    except FileNotFoundError:
-        await ctx.reply(MessageChain([Plain(f"未找到歌曲对应谱面，可能是内部错误或数据未更新")]))
+    if chartutil.checkIsHit(chartid, difficulty):
+        local_path = os.path.join(CHART_CACHE_DIR, f"{chartid}_{'' if difficulty == 'mas' else difficulty}.png")
+        try:
+            img_conponent = await Image.from_local(local_path)
+        except FileNotFoundError:
+            await ctx.reply(MessageChain([Plain(f"未找到歌曲对应谱面，可能是内部错误或数据未更新")]))
+            return
+        await ctx.reply(MessageChain([
+            Plain(f"歌曲 - {song.get('songId')}\n"),
+            Plain(f"难度 - {difficulty}\n"),
+            Plain(f"Artist - {song.get('artist')}\n"),
+            Plain(f"NoteDesigner - {song.get('sheets')[index]['noteDesigner']}\n"),
+            Plain(f"BPM - {song.get('bpm')}\n"),
+            Plain(f"Notes - {song.get('sheets')[index]['noteCounts']['total']}"),
+            img_conponent
+        ]))
         return
-    await ctx.reply(MessageChain([
-        Plain(f"歌曲 - {song.get('songId')}\n"),
-        Plain(f"难度 - {difficulty}\n"),
-        Plain(f"Artist - {song.get('artist')}\n"),
-        Plain(f"NoteDesigner - {song.get('sheets')[index]['noteDesigner']}\n"),
-        Plain(f"BPM - {song.get('bpm')}\n"),
-        Plain(f"Notes - {song.get('sheets')[index]['noteCounts']['total']}"),
-        img_conponent
-    ]))
-    return
-       
+    else:
+        print("[ChunithmUtil] 缓存未命中，开始请求")
+        asyncio.create_task(chartutil.getChart(chartid, difficulty, str(ctx.event.launcher_id), song))
