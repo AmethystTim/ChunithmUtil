@@ -8,6 +8,7 @@ from pkg.plugin.events import *  # 导入事件类
 from pkg.platform.types import *
 
 from .utils.songutil import SongUtil
+from .utils.aliaslogger import AliasLogger
 from .query_song import searchSong
 
 dotenv.load_dotenv()
@@ -45,18 +46,36 @@ async def queryAddAlias(ctx: EventContext, args: list) -> None:
         await ctx.reply(msg_chain)
         return
     songId = matched_songs[0]
+    songs = []
+    with open(SONGS_PATH, 'r', encoding='utf-8') as f:
+        songs = json.load(f).get('songs')
+    song_index = songs.index([song for song in songs if song.get('songId') == songId][0])
     
     alias_json_songs = []
     with open(ALIAS_PATH, 'r', encoding='utf-8') as f:
         alias_json_songs = json.load(f).get('songs')
     
     songutil = SongUtil()
-    available_aliases, unavailable_aliases = songutil.addAlias(songId, alias_json_songs, aliases_to_add)
+    valid_aliases, invalid_aliases = songutil.addAlias(songId, alias_json_songs, aliases_to_add)
+    
+    '''记录别名添加日志'''
+    aliaslogger = AliasLogger()
+    aliaslogger.log({
+        "user_id": ctx.event.sender_id,
+        "user_name": ctx.event.query.message_event.sender.get_name(),
+        "group_id": ctx.event.launcher_id,
+        "cid": f"c{song_index}",
+        "songId": songId,
+        "valid_aliases": valid_aliases,
+        "invalid_aliases": invalid_aliases
+    })
+    
     await ctx.reply(MessageChain([
-        Plain(f"歌曲{songId}的别名：{', '.join(available_aliases)}添加成功\n")
-        if len(available_aliases) > 0 else Plain(""),
-        Plain(f"歌曲{songId}的别名：{', '.join(unavailable_aliases)}已存在")
-        if len(unavailable_aliases) > 0 else Plain("")
+        Plain(f"歌曲{songId}的别名：{', '.join(valid_aliases)}添加成功\n")
+        if len(valid_aliases) > 0 else Plain(""),
+        Plain(f"歌曲{songId}的别名：{', '.join(invalid_aliases)}已存在")
+        if len(invalid_aliases) > 0 else Plain(""),
+        Plain("\n添加歌曲别名将记录在日志中")
     ]))
 
 async def queryGetAlias(ctx: EventContext, args: list) -> None:
@@ -102,6 +121,7 @@ async def queryGetAlias(ctx: EventContext, args: list) -> None:
     msg_chain = MessageChain([Plain(f"c{song_index} - {songId}的别名：")])
     for alias in aliases:
         msg_chain.append(Plain(f"\n· {alias}"))
+    msg_chain.append(Plain(f"\n别名均为用户添加，与BOT无关"))
     await ctx.reply(msg_chain)
 
 async def queryDelAlias(ctx: EventContext, args: list) -> None:
