@@ -112,7 +112,7 @@ async def queryGuess(ctx: EventContext, args: list, pattern: str, guessgame: Gue
             await ctx.reply(MessageChain([
                 Plain(f"好像没人猜出来捏，正确答案为：\nc{true_index} - {song.get('songId')}"),
                 img_component,
-                Plain(f"可以顺手使用“alias c{true_index} [别名]”为该歌曲添加别名，方便以后的猜歌")
+                Plain(f"可以顺手使用“chuset c{true_index} [别名]”为该歌曲添加别名，方便以后的猜歌")
             ]))
             guessgame.remove_group(str(ctx.event.launcher_id))
             await ctx.reply(MessageChain([Plain("已结束此次猜歌\n可使用“chu guess [难度]”创建新的猜歌")]))

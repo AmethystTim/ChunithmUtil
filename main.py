@@ -33,8 +33,8 @@ class ChunithmUtilPlugin(BasePlugin):
                 r"^(.+)是什么歌$",
             "chu随机一曲": 
                 r"^chu随机[一曲]*$",
-            "添加别名|alias [歌曲id] [别名1],[别名2],...": 
-                r"(?:^添加别名|alias) (c\d+)\s+((?:[^,，]+[,，]?)+)$",
+            "添加别名|chuset [歌曲id] [别名1],[别名2],...": 
+                r"(?:^添加别名|chuset) (c\d+)\s+((?:[^,，]+[,，]?)+)$",
             "别名[歌曲id|歌曲别名]": 
                 r"^别名\s*(.+)$",
             "chu lv [难度]": 
@@ -90,7 +90,7 @@ class ChunithmUtilPlugin(BasePlugin):
             case "chu随机一曲":
                 await queryRdnSong(ctx, parseArgs(self.instructions[instruction], msg))
             
-            case "添加别名|alias [歌曲id] [别名1],[别名2],...":
+            case "添加别名|chuset [歌曲id] [别名1],[别名2],...":
                 await queryAddAlias(ctx, parseArgs(self.instructions[instruction], msg))
             
             case "别名[歌曲id|歌曲别名]":

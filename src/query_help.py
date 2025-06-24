@@ -13,7 +13,7 @@ async def queryHelp(ctx: EventContext) -> None:
         Plain("CHUNITHM UTILS 指令帮助：\n"),
         Plain("· chu help - 查看帮助\n"),
         Plain("· [别名/cid]是什么歌 - 查找歌曲\n"),
-        Plain("· alias [歌曲cid] [别名1，别名2，...] - 为歌曲添加别名\n"),
+        Plain("· chuset [歌曲cid] [别名1，别名2，...] - 为歌曲添加别名\n"),
         Plain("· 别名 [歌曲cid] - 查看指定歌曲所有别名\n"),
         Plain("· chu随机一曲 - 随机一首歌\n"),
         Plain("· chu lv [定数] - 查看指定定数所有歌曲\n"), 
