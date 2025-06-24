@@ -16,8 +16,10 @@ from .src.query_aritst import *
 from .src.query_notedesigner import *
 from .src.query_level import *
 from .src.query_update import *
+from .src.query_guess import *
 
 from .src.utils.argsparser import *
+from .src.utils.guessgame import *
 
 # 注册插件
 @register(name="ChunithmUtil", description="集成多项Chunithm实用功能的LangBot插件🧩", version="1.1", author="Amethyst")
@@ -26,7 +28,7 @@ class ChunithmUtilPlugin(BasePlugin):
     def __init__(self, host: APIHost):
         self.instructions = {
             "chu help": 
-                r"^chu help$",
+                r"^chu\s?help$",
             "[歌名]是什么歌": 
                 r"^(.+)是什么歌$",
             "chu随机一曲": 
@@ -40,14 +42,23 @@ class ChunithmUtilPlugin(BasePlugin):
             "chu容错 [歌曲id/别名] [难度]": 
                 r"^chu容错 (c\d+|.+?)(?: (exp|mas|ult))?$",
             "chuchart [歌曲id/别名] [难度]": 
-                r"^chuchart (c\d+|.+?)(?: (exp|mas|ult))?$",
+                r"^chuchart\s?(c\d+|.+?)(?: (exp|mas|ult))?$",
             "chu曲师 [曲师名]" : 
-                r"^chu(?:曲师| qs) (.+)$",
+                r"^chu(?:曲师|\s?qs)\s?(.+)$",
             "chu谱师 [谱师名]": 
-                r"^chu(?:谱师| ps) (.+)$",
+                r"^chu(?:谱师|\s?ps)\s?(.+)$",
             "chu update":
-                r"^chu update$",
+                r"^chu\s?update$",
+            "chu guess [难度]":
+                r"^chu\s?guess(?: (bas|adv|exp|mas|ult))?$",
+            "chu guess end":
+                r"^(chu\s?guess\s?end|cge)$",
+            "guess [歌名]":
+                r"^guess\s?(.+)$",
+            "chu hint":
+                r"^chu\s?hint$",
         }
+        self.guessgame = GuessGame()
     
     def matchPattern(self, msg) -> str:
         '''匹配指令
@@ -59,7 +70,6 @@ class ChunithmUtilPlugin(BasePlugin):
         '''
         for pattern in self.instructions:
             if re.match(self.instructions[pattern], msg):
-                self.ap.logger.info(f"指令匹配：{pattern}")
                 return pattern
         return None
 
@@ -106,6 +116,9 @@ class ChunithmUtilPlugin(BasePlugin):
             
             case "chu help":
                 await queryHelp(ctx)
+            
+            case "chu guess [难度]" | "chu guess end" | "guess [歌名]" | "chu hint":
+                await queryGuess(ctx, parseArgs(self.instructions[instruction], msg), instruction, self.guessgame)
             
             case _:
                 pass

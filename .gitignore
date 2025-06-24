@@ -3,11 +3,13 @@ cache/covers/*
 cache/others/*
 data/*
 test/*
+logs/*
 
 !cache/charts/.gitkeep
 !cache/covers/.gitkeep
 !cache/others/.gitkeep
 !data/alias.json
+!logs/.gitkeep
 
 test/
 

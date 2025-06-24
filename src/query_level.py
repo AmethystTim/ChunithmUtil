@@ -6,7 +6,7 @@ from pkg.plugin.context import EventContext
 from pkg.plugin.events import *  # 导入事件类
 from pkg.platform.types import *
 
-from .utils.fowarder import *
+from .utils.apicaller import *
 
 dotenv.load_dotenv()
 SONGS_PATH = os.path.join(os.path.dirname(__file__), "..", os.getenv("SONG_PATH"))
@@ -94,5 +94,5 @@ async def queryLevel(ctx: EventContext, args: list) -> None:
         "summary": "点击浏览",
         "source": "定数表"
     }
-    forwarder = forward_message(host="127.0.0.1", port=3000)
-    await forwarder.send(message_data)
+    msgplatform = MsgPlatform(3000)
+    await msgplatform.callApi("/send_forward_msg", message_data)

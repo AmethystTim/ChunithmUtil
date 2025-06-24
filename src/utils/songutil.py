@@ -38,6 +38,20 @@ class SongUtil:
                         return self.diff2index[keys]
         return None
     
+    def getIndex2Diff(self, index: int) -> str:
+        '''获取索引对应的难度
+        
+        Args:
+            index (int): 索引
+        
+        Returns:
+            索引对应的难度
+        '''
+        for keys in self.diff2index.keys():
+            if self.diff2index[keys] == index:
+                return keys
+        return None
+    
     def getArtists(self, songs: list) -> str:
         '''获取所有曲师构成的列表
         
