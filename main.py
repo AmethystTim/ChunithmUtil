@@ -13,13 +13,23 @@ from .src.query_alias import *
 from .src.query_rdnsong import *
 from .src.query_tolerance import * 
 from .src.query_aritst import *
-from .src.query_notedesigner import *
+# from .src.query_notedesigner import *
 from .src.query_level import *
 from .src.query_update import *
 from .src.query_guess import *
+from .src.query_method import *
+from .src.query_chart_we import *
+from .src.query_updscore import *
 
 from .src.utils.argsparser import *
 from .src.utils.guessgame import *
+
+os.environ.pop("http_proxy", None)
+os.environ.pop("https_proxy", None)
+os.environ.pop("HTTP_PROXY", None)
+os.environ.pop("HTTPS_PROXY", None)
+os.environ.pop("all_proxy", None)
+os.environ.pop("ALL_PROXY", None)
 
 # 注册插件
 @register(name="ChunithmUtil", description="集成多项Chunithm实用功能的LangBot插件🧩", version="1.1", author="Amethyst")
@@ -29,6 +39,7 @@ class ChunithmUtilPlugin(BasePlugin):
         self.instructions = {
             "chu help": 
                 r"^chu\s?help$",
+            # ===== 查歌 =====
             "[歌名]是什么歌": 
                 r"^(.+)是什么歌$",
             "chu随机一曲": 
@@ -41,14 +52,19 @@ class ChunithmUtilPlugin(BasePlugin):
                 r"^chu\s?lv\s?(\S+)$",
             "chu容错 [歌曲id/别名] [难度]": 
                 r"^(?:chu容错|churc)\s?(c\d+|.+?)(?: (exp|mas|ult))?$",
+            # ===== 查谱 =====
             "chuchart [歌曲id/别名] [难度]": 
                 r"^chuchart\s?(c\d+|.+?)(?: (exp|mas|ult))?$",
+            "wechart [歌曲id/别名] [难度]":
+                r"^wecart\s?(c\d+|.+?)(.*)$",
+            # ===== 查人 =====
             "chu曲师 [曲师名]" : 
                 r"^chu(?:曲师|\s?qs)\s?(.+)$",
-            "chu谱师 [谱师名]": 
-                r"^chu(?:谱师|\s?ps)\s?(.+)$",
+            # "chu谱师 [谱师名]": 
+            #     r"^chu(?:谱师|\s?ps)\s?(.+)$",
             "chu update":
                 r"^chu\s?update$",
+            # ===== 猜歌 =====
             "chu guess [难度]":
                 r"^chu\s?guess(?: (bas|adv|exp|mas|ult))?$",
             "chu guess end":
@@ -57,6 +73,26 @@ class ChunithmUtilPlugin(BasePlugin):
                 r"^guess\s?(.+)$",
             "chu hint":
                 r"^chu\s?hint$",
+            # ===== 查分 =====
+            "update [分数] [歌名] [难度]":
+                 r"upd\s*(\d+)\s*(.*?)(?:\s+(exp|mas|ult))?$",
+            "b30":
+                r"^\b(b30(?: simple)?)\b$",
+            "b50":
+                r"^\b(b50(?: simple)?)\b$",
+            "aj30":
+                r"^\b(aj30(?: simple)?)\b$",
+            "copy cn":
+                r"^copy\s?cn$",
+            "copy rin":
+                r"^copy\s?rin$",
+            # ===== 弃用 =====
+            "[歌名]这里怎么打":
+                r"^(.+)这里怎么打$",
+            "[歌名]有什么手法":
+                r"^(.+)有什么手法$",
+            "[歌名]的[mid]这么打":
+                r"^(.+)的(\S+)这么打$",
         }
         self.guessgame = GuessGame()
     
@@ -68,10 +104,11 @@ class ChunithmUtilPlugin(BasePlugin):
         Returns:
             匹配结果
         '''
+        res = None
         for pattern in self.instructions:
             if re.match(self.instructions[pattern], msg):
-                return pattern
-        return None
+                res = pattern
+        return res
 
     # 异步初始化
     async def initialize(self):
@@ -104,12 +141,15 @@ class ChunithmUtilPlugin(BasePlugin):
             
             case "chuchart [歌曲id/别名] [难度]":
                 await queryChart(ctx, parseArgs(self.instructions[instruction], msg))
+                
+            case "wechart [歌曲id/别名] [难度]":
+                await queryChartWE(ctx, parseArgs(self.instructions[instruction], msg))
             
             case "chu曲师 [曲师名]":
                 await queryArtist(ctx, parseArgs(self.instructions[instruction], msg))
                 
-            case "chu谱师 [谱师名]":
-                await queryNoteDesigner(ctx, parseArgs(self.instructions[instruction], msg))
+            # case "chu谱师 [谱师名]":
+            #     await queryNoteDesigner(ctx, parseArgs(self.instructions[instruction], msg))
             
             case "chu update":
                 await queryUpdate(ctx, parseArgs(self.instructions[instruction], msg))
@@ -119,6 +159,11 @@ class ChunithmUtilPlugin(BasePlugin):
             
             case "chu guess [难度]" | "chu guess end" | "guess [歌名]" | "chu hint":
                 await queryGuess(ctx, parseArgs(self.instructions[instruction], msg), instruction, self.guessgame)
+                
+            case "update [分数] [歌名] [难度]":
+                await queryUpdScore(ctx, parseArgs(self.instructions[instruction], msg))
+            # case "[歌名]这里怎么打" | "[歌名]有什么手法" | "[歌名]的[mid]这么打":
+            #     await queryMethod(ctx, parseArgs(self.instructions[instruction], msg), instruction, msg)
             
             case _:
                 pass

@@ -40,17 +40,17 @@ async def queryGuess(ctx: EventContext, args: list, pattern: str, guessgame: Gue
                 guessgame.add_group(group_id)
                 '''为该群创建一个新的猜歌游戏'''
                 songs = None
-                with open(SONGS_PATH, "r", encoding="utf-8") as file:
-                    songs = json.load(file).get("songs")
+                with open(SONGS_PATH, "r", encoding="utf-8-sig") as file:
+                    songs = json.load(file)
                 song = random.choice(songs)
                 # 过滤World's End曲目
-                while song.get("songId").startswith("(WE)"):
-                    song = random.choice(songs)
-                song_index = songs.index(song)
-                guessgame.set_song_index(group_id, song_index)
+                # while song.get("songId").startswith("(WE)"):
+                #     song = random.choice(songs)
+                cid = song.get('idx')
+                guessgame.set_song_index(group_id, cid)
                 
                 songutil = SongUtil()
-                songutil.checkIsHit(os.getenv('COVER_URL'), song.get('imageName'))
+                songutil.checkIsHit(os.getenv('COVER_URL'), song.get('img'))
                 
                 # 随机剪裁曲绘
                 difficulty = difficulty if difficulty else "mas"
@@ -68,7 +68,7 @@ async def queryGuess(ctx: EventContext, args: list, pattern: str, guessgame: Gue
                         factor = 3.0
                     case _:
                         factor = 2.5
-                img_path = os.path.join(COVER_CACHE_DIR, song.get('imageName'))
+                img_path = os.path.join(COVER_CACHE_DIR, song.get('img') + ".webp")
                 img = PIL.Image.open(img_path)
                 img_w, img_h = img.size
                 new_w = img_w / factor
@@ -81,7 +81,7 @@ async def queryGuess(ctx: EventContext, args: list, pattern: str, guessgame: Gue
                 # 加载剪裁后的曲绘
                 img_component = await Image.from_local(os.path.join(GAME_CACHE_PATH, f"{group_id}.png"))
                 msg_chain = MessageChain([
-                    Plain(f"Chunithm Guess\n难度：{difficulty}\n可以使用“guess [歌名/别名]”进行猜歌"),
+                    Plain(f"Chunithm Guess\n裁剪难度：{difficulty}\n可以使用“guess [歌名/别名]”进行猜歌"),
                     img_component
                 ])
                 await ctx.reply(msg_chain)
@@ -102,15 +102,18 @@ async def queryGuess(ctx: EventContext, args: list, pattern: str, guessgame: Gue
                 return
             songs = None
             song = None
-            with open(SONGS_PATH, "r", encoding="utf-8") as file:
-                songs = json.load(file).get("songs")
+            with open(SONGS_PATH, "r", encoding="utf-8-sig") as file:
+                songs = json.load(file)
             true_index = guessgame.get_group_index(str(ctx.event.launcher_id))
-            song = songs[true_index]
+            for s in songs:
+                if s.get('idx') == true_index:
+                    song = s
+                    break
             songutil = SongUtil()
-            songutil.checkIsHit(os.getenv('COVER_URL'), song.get('imageName'))
-            img_component = await Image.from_local(os.path.join(COVER_CACHE_DIR, song.get('imageName')))
+            songutil.checkIsHit(os.getenv('COVER_URL'), song.get('img'))
+            img_component = await Image.from_local(os.path.join(COVER_CACHE_DIR, song.get('img') + ".webp"))
             await ctx.reply(MessageChain([
-                Plain(f"好像没人猜出来捏，正确答案为：\nc{true_index} - {song.get('songId')}"),
+                Plain(f"好像没人猜出来捏，正确答案为：\nc{true_index} - {song.get('title')}"),
                 img_component,
                 Plain(f"可以顺手使用“chuset c{true_index} [别名]”为该歌曲添加别名，方便以后的猜歌")
             ]))
@@ -119,10 +122,10 @@ async def queryGuess(ctx: EventContext, args: list, pattern: str, guessgame: Gue
             return
         case "guess [歌名]":
             '''检查猜歌'''
-            song_name, = args
+            name, = args
             group_id = str(ctx.event.launcher_id)
             song = None
-            song_index = -1
+            cid = -1
             
             if not guessgame.check_is_exist(group_id):
                 await ctx.reply(MessageChain([
@@ -131,34 +134,39 @@ async def queryGuess(ctx: EventContext, args: list, pattern: str, guessgame: Gue
                 ]))
                 return
                 
-            with open(SONGS_PATH, "r", encoding="utf-8") as file:
-                songs = json.load(file).get("songs")
+            with open(SONGS_PATH, "r", encoding="utf-8-sig") as file:
+                songs = json.load(file)
             
-            matched_songs = searchSong(song_name)
+            matched_songs = searchSong(name)
             
             if len(matched_songs) == 1:
-                song = [song for song in songs if song.get('songId') == matched_songs[0]][0]
-                song_index = songs.index(song)
+                target_songs = [song for song in songs if song.get('idx') == matched_songs[0]]
+                song = target_songs[0]
+                cid = song.get('idx')
             elif len(matched_songs) == 0:
-                await ctx.reply(MessageChain([Plain(f"没有找到{song_name}，请尝试输入歌曲全称或其他别名")]))
+                await ctx.reply(MessageChain([Plain(f"没有找到{name}，请尝试输入歌曲全称或其他别名")]))
                 return
             else:
                 msg_chain = MessageChain([Plain(f"有多个曲目符合条件\n")])
-                for songId in matched_songs:
-                    song_index = songs.index([song for song in songs if song.get('songId') == songId][0])
-                    msg_chain.append(Plain(f"c{song_index} - {songId}\n"))
-                msg_chain.append(Plain(f"\n请使用“guess [cid]”进行猜歌"))
+                for cid in matched_songs:
+                    name = None
+                    for song in songs:
+                        if song.get('idx') == cid:
+                            name = song.get('title')
+                            break
+                    msg_chain.append(Plain(f"c{cid} - {name}\n"))
+                msg_chain.append(Plain(f"\n请使用cid进行精准查询"))
                 await ctx.reply(msg_chain)
                 return
             
             '''检查index是否正确'''
-            if guessgame.check_is_correct(group_id, song_index):
+            if guessgame.check_is_correct(group_id, cid):
                 songutil = SongUtil()
-                songutil.checkIsHit(os.getenv('COVER_URL'), song.get('imageName'))
-                img_component = await Image.from_local(os.path.join(COVER_CACHE_DIR, song.get('imageName')))
+                songutil.checkIsHit(os.getenv('COVER_URL'), song.get('img'))
+                img_component = await Image.from_local(os.path.join(COVER_CACHE_DIR, song.get('img') + ".webp"))
                 await ctx.reply(MessageChain([
                     At(ctx.event.sender_id),
-                    Plain(f"\n恭喜捏，正确答案是：\nc{song_index} - {songs[song_index].get('songId')}"),
+                    Plain(f"\n恭喜捏，正确答案是：\nc{cid} - {song.get('title')}"),
                     img_component
                 ]))
                 # 移除群的猜歌游戏
@@ -176,23 +184,26 @@ async def queryGuess(ctx: EventContext, args: list, pattern: str, guessgame: Gue
                     Plain("\n该群还没有创建猜歌，可以使用“chu guess [难度]”进行创建")
                 ]))
                 return
-            song_index = guessgame.get_group_index(group_id)
+            cid = guessgame.get_group_index(group_id)
             song = None
-            with open(SONGS_PATH, "r", encoding="utf-8") as file:
-                songs = json.load(file).get("songs")
-            song = songs[song_index]
+            with open(SONGS_PATH, "r", encoding="utf-8-sig") as file:
+                songs = json.load(file)
+            target_songs = []
+            for s in songs:
+                if s.get('idx') == cid:
+                    target_songs.append(s)
+            song = target_songs[0]
             # bpm, category, artist, 定数, notes
             songutil = SongUtil()
             seed = random.randint(0, 3)
             hints = [
-                f"这首歌的BPM为：{song.get('bpm')}" if {song.get('bpm')}!='None' else None,
-                f"歌曲分类为：{song.get('category')}",
+                f"歌曲分类为：{song.get('genre')}",
                 f"曲师为：{song.get('artist')}",
-                f"{songutil.getIndex2Diff(seed)}难度定数为：{song.get('sheets')[seed].get('internalLevelValue')}",
-                f"{songutil.getIndex2Diff(seed)}难度有{song.get('sheets')[seed].get('noteCounts').get('total')}个note"
+                f"{songutil.getIndex2Diff(seed)}难度定数为：{target_songs[seed].get('const')}",
+                f"{songutil.getIndex2Diff(seed)}难度有{target_songs[seed].get('notes')}个note",
+                f"发行版本为：{song.get('version')}",
             ]
-            if None in hints:
-                hints.remove(None)
+            
             hint = random.choice(hints)
             await ctx.reply(MessageChain([
                 Plain("提示🌟\n"),

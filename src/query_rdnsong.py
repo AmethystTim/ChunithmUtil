@@ -24,16 +24,18 @@ async def queryRdnSong(ctx: EventContext, args: list) -> None:
     '''
     
     songs = []
-    with open(SONGS_PATH, "r", encoding="utf-8") as file:
-        songs = json.load(file).get("songs")
+    with open(SONGS_PATH, "r", encoding="utf-8-sig") as file:
+        songs = json.load(file)
         
     song = random.choice(songs)
     
-    songutil = SongUtil()
-    songutil.checkIsHit(os.getenv('COVER_URL'), song.get('imageName'))
-    img_conponent = await Image.from_local(os.path.join(COVER_CACHE_DIR, song.get('imageName')))
-    msg_chain = MessageChain([Plain(f"c{songs.index(song)} - {song.get('title')}\nby {song.get('artist')}")])
-    for sheet in song.get('sheets'):
-        msg_chain.append(Plain(f"\n{str(sheet.get('difficulty')).capitalize()} {sheet.get('internalLevelValue')}"))
-    msg_chain.append(img_conponent)
-    await ctx.reply(msg_chain)
+    # songutil = SongUtil()
+    # songutil.checkIsHit(os.getenv('COVER_URL'), song.get('imageName'))
+    # img_conponent = await Image.from_local(os.path.join(COVER_CACHE_DIR, song.get('imageName') + ".webp"))
+    # msg_chain = MessageChain([Plain(f"c{songs.index(song)} - {song.get('title')}\nby {song.get('artist')}")])
+    # for sheet in song.get('sheets'):
+    #     msg_chain.append(Plain(f"\n{str(sheet.get('difficulty')).capitalize()} {sheet.get('internalLevelValue')}"))
+    # msg_chain.append(img_conponent)
+    # await ctx.reply(msg_chain)
+    
+    await ctx.reply(MessageChain([Plain("Not implemented yet.")]))

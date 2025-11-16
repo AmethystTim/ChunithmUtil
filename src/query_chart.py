@@ -27,40 +27,48 @@ async def queryChart(ctx: EventContext, args: list) -> None:
     '''
     songs = []
     song = {}
-    song_name, difficulty = args
+    name, difficulty = args
     
-    with open(SONGS_PATH, "r", encoding="utf-8") as file:
-        songs = json.load(file).get("songs")
+    with open(SONGS_PATH, "r", encoding="utf-8-sig") as file:
+        songs = json.load(file)
     
     if difficulty == None:
         difficulty = "mas"
     
-    matched_songs = searchSong(song_name)
-    
+    matched_songs = searchSong(name)
+    target_songs = []
+    cid = None
     if len(matched_songs) == 1:
-        song = [song for song in songs if song.get('songId') == matched_songs[0]][0]
-        song_index = songs.index(song)
+        target_songs = [song for song in songs if song.get('idx') == matched_songs[0]]
+        song = target_songs[0]
+        cid = song.get('idx')
     elif len(matched_songs) == 0:
-        await ctx.reply(MessageChain([Plain(f"没有找到{song_name}，请尝试输入歌曲全称或其他别名")]))
+        await ctx.reply(MessageChain([Plain(f"没有找到{name}，请尝试输入歌曲全称或其他别名")]))
         return
     else:
         msg_chain = MessageChain([Plain(f"有多个曲目符合条件\n")])
-        for songId in matched_songs:
-            song_index = songs.index([song for song in songs if song.get('songId') == songId][0])
-            msg_chain.append(Plain(f"c{song_index} - {songId}\n"))
-        msg_chain.append(Plain(f"\n请使用“chuchart [cid]”进行谱面查询"))
+        for cid in matched_songs:
+            name = None
+            for song in songs:
+                if song.get('idx') == cid:
+                    name = song.get('title')
+                    break
+            msg_chain.append(Plain(f"c{cid} - {name}\n"))
+        msg_chain.append(Plain(f"\n请使用cid进行精准查询"))
         await ctx.reply(msg_chain)
         return
     
     songutil = SongUtil()
     index = songutil.getDiff2Index(difficulty)
     try:
-        if index == 4 and len(song['sheets']) < 5: # 检查是否有Ultima难度
-            await ctx.reply(MessageChain([Plain(f"歌曲{song_name}无Ultima难度")]))
+        if index == 4 and len(target_songs) < 5: # 检查是否有Ultima难度
+            await ctx.reply(MessageChain([Plain(f"歌曲{song.get('title')}无Ultima难度")]))
             return
     except Exception as e:
         await ctx.reply(MessageChain([Plain(f"未知难度")]))
         return
+    # 切换为对应难度
+    song = target_songs[index]
 
     chartutil = ChartUtil()
     chartid = chartutil.getChartID(song)
@@ -75,12 +83,11 @@ async def queryChart(ctx: EventContext, args: list) -> None:
             await ctx.reply(MessageChain([Plain(f"未找到歌曲对应谱面，可能是内部错误或数据未更新")]))
             return
         await ctx.reply(MessageChain([
-            Plain(f"歌曲 - {song.get('songId')}\n"),
+            Plain(f"c{cid} - {song.get('title')}\n"),
             Plain(f"难度 - {difficulty}\n"),
             Plain(f"Artist - {song.get('artist')}\n"),
-            Plain(f"NoteDesigner - {song.get('sheets')[index]['noteDesigner']}\n"),
             Plain(f"BPM - {song.get('bpm')}\n"),
-            Plain(f"Notes - {song.get('sheets')[index]['noteCounts']['total']}"),
+            Plain(f"Notes - {song.get('notes')}"),
             img_conponent
         ]))
         return

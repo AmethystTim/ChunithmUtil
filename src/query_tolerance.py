@@ -21,30 +21,36 @@ async def queryTolerance(ctx: EventContext, args: list) -> None:
     Returns:
         None: 无返回值
     '''
-    song_name, difficulty = args
+    name, difficulty = args
     
     songs = []
     song = None
-    with open(SONGS_PATH, "r", encoding="utf-8") as file:
-        songs = json.load(file).get("songs")
+    with open(SONGS_PATH, "r", encoding="utf-8-sig") as file:
+        songs = json.load(file)
     
     if difficulty == None:  # 默认mas
         difficulty = "mas"
 
-    matched_songs = searchSong(song_name)
-    
+    matched_songs = searchSong(name)
+    target_songs = []
+    cid = None
     if len(matched_songs) == 1:
-        song = [song for song in songs if song.get('songId') == matched_songs[0]][0]
-        song_index = songs.index(song)
+        target_songs = [song for song in songs if song.get('idx') == matched_songs[0]]
+        song = target_songs[0]
+        cid = song.get('idx')
     elif len(matched_songs) == 0:
-        await ctx.reply(MessageChain([Plain(f"没有找到{song_name}，请尝试输入歌曲全称或其他别名")]))
+        await ctx.reply(MessageChain([Plain(f"没有找到{name}，请尝试输入歌曲全称或其他别名")]))
         return
     else:
         msg_chain = MessageChain([Plain(f"有多个曲目符合条件\n")])
-        for songId in matched_songs:
-            song_index = songs.index([song for song in songs if song.get('songId') == songId][0])
-            msg_chain.append(Plain(f"c{song_index} - {songId}\n"))
-        msg_chain.append(Plain(f"\n请使用“chu容错 [cid]”进行容错计算"))
+        for cid in matched_songs:
+            name = None
+            for song in songs:
+                if song.get('idx') == cid:
+                    name = song.get('title')
+                    break
+            msg_chain.append(Plain(f"c{cid} - {name}\n"))
+        msg_chain.append(Plain(f"\n请使用cid进行精准查询"))
         await ctx.reply(msg_chain)
         return
 
@@ -52,15 +58,17 @@ async def queryTolerance(ctx: EventContext, args: list) -> None:
     index = songutil.getDiff2Index(difficulty)
     try:
         if index == 4 and len(song['sheets']) < 5: # 检查是否有Ultima难度
-            await ctx.reply(MessageChain([Plain(f"歌曲{song_name}无Ultima难度")]))
+            await ctx.reply(MessageChain([Plain(f"歌曲{song.get('title')}无Ultima难度")]))
             return
     except Exception as e:
         await ctx.reply(MessageChain([Plain(f"未知难度")]))
         return
+    # 切换为对应难度
+    song = target_songs[index]
     
     tolerance = songutil.calcTolerance(song, difficulty)
     await ctx.reply(MessageChain([
-        Plain(f'歌曲 - {song.get("songId")}\n难度 - {difficulty}\n'),
-        Plain(f'· 鸟容错\n100小j：{tolerance["1007500"]["100j"]}个attack\n50小j：{tolerance["1007500"]["50j"]}个attack\n'),
-        Plain(f'· 鸟加容错\n100小j：{tolerance["1009000"]["100j"]}个attack\n50小j：{tolerance["1009000"]["50j"]}个attack')
+        Plain(f'c{cid} - {song.get("title")}\n难度 - {difficulty}\n'),
+        Plain(f'· 鸟容错\n{tolerance["1007500"]["attack"]}个attack + {tolerance["1007500"]["justice"]}个小j\n'),
+        Plain(f'· 鸟加容错\n{tolerance["1009000"]["attack"]}个attack + {tolerance["1009000"]["justice"]}个小j')
     ]))

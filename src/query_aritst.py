@@ -26,8 +26,8 @@ async def queryArtist(ctx: EventContext, args: list) -> None:
     songs = []
     matched_artists = []
     
-    with open(SONGS_PATH, "r", encoding="utf-8") as file:
-        songs = json.load(file).get("songs")
+    with open(SONGS_PATH, "r", encoding="utf-8-sig") as file:
+        songs = json.load(file)
     
     searcher = Searcher()
     songutil = SongUtil()

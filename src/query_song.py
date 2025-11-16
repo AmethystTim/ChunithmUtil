@@ -16,47 +16,60 @@ ALIAS_PATH = os.path.join(os.path.dirname(__file__), "..", os.getenv("ALIAS_PATH
 SEGA_SONG_PATH = os.path.join(os.path.dirname(__file__), "..", os.getenv("SEGA_SONG_PATH"))
 COVER_CACHE_DIR = os.path.join(os.path.dirname(__file__), '..', 'cache', 'covers')
 
-def searchSong(song_name: str) -> list[str]:
+def calcDate(timeStamp: int):
+    '''时间戳转YEAR-MONTH-DAY'''
+    import time
+    timeArray = time.localtime(timeStamp*100)
+    return time.strftime("%Y-%m-%d", timeArray)
+
+
+def searchSong(name: str) -> list[str]:
     '''查询歌曲
     
     Args:
-        song_name: 歌曲名
+        name: 歌曲名
     Returns:
-        matched_songs: 匹配歌曲songId列表
+        cids: 匹配歌曲cid列表
     '''
     songs = []
-    matched_songs = []
+    cids = []
     
-    with open(SONGS_PATH, "r", encoding="utf-8") as f:
-        songs = json.load(f).get("songs")
+    with open(SONGS_PATH, "r", encoding="utf-8-sig") as f:
+        songs = json.load(f)
     with open(ALIAS_PATH, "r", encoding="utf-8") as f:
-        alias_json_songs = json.load(f).get("songs")
+        alias_for_songs = json.load(f).get("songs")
 
     # 1. cid搜索
-    if re.match(r"^c\d+$", song_name):
-        song_index = int(song_name[1:])
-        if not (0 <= song_index < len(songs)):
-            return []
-        song = songs[song_index]
-        matched_songs.append(song.get('songId'))
-        return matched_songs
+    if re.match(r"^c\d+$", name):
+        cid = name[1:]
+        if cid.isdigit():
+            for song in songs:
+                if song.get('idx') == cid and cid not in cids:
+                    cids.append(cid)
+                    break
+        return cids
     
     # 2. 别名搜索 
-    for song in alias_json_songs:
+    for song in alias_for_songs:
         for alias in song.get('aliases'):
-            if alias == song_name:  # 别名采用精准匹配
-                matched_songs.append(song.get('songId'))
-    if len(matched_songs) > 0:  # 别名存在，直接返回
-        return matched_songs
+            if alias == name:  # 别名采用精准匹配
+                cids.append(song.get('cid'))
+    if len(cids) > 0:  # 别名存在，直接返回
+        return cids
     
     # 3. 模糊搜索
     searcher = Searcher()
-    songId_list = [song.get('songId') for song in songs]
-    fuzzy_searchresult = searcher.generalFuzzySearch(song_name, songId_list)
-    matched_songs.extend(fuzzy_searchresult)
+    names = list(set([song.get('title') for song in songs]))
+    fuzzy_matched_songs = searcher.generalFuzzySearch(name, names)
+    fuzzy_matched_cids = []
+    for fuzzy_matched_song in fuzzy_matched_songs:
+        for song in songs:
+            if song.get('title') == fuzzy_matched_song:
+                fuzzy_matched_cids.append(song.get('idx'))
+    cids.extend(fuzzy_matched_cids)
     
-    matched_songs = list(set(matched_songs))
-    return matched_songs
+    cids = list(set(cids))
+    return cids
     
 async def querySong(ctx: EventContext, args: list) -> None:
     '''回复歌曲查询结果
@@ -67,39 +80,45 @@ async def querySong(ctx: EventContext, args: list) -> None:
     Returns:
         None: 无返回值
     '''
-    song_name, = args
+    name, = args
     songs = []
     
-    with open(SONGS_PATH, "r", encoding="utf-8") as f:
-        songs = json.load(f).get("songs")
+    with open(SONGS_PATH, "r", encoding="utf-8-sig") as f:
+        songs = json.load(f)
     
-    matched_songs = searchSong(song_name)
+    matched_songs = searchSong(name)
     
     if len(matched_songs) == 1:
-        song = [song for song in songs if song.get('songId') == matched_songs[0]][0]
-        song_index = songs.index(song)
+        target_songs = [song for song in songs if song.get('idx') == matched_songs[0]]
+        song = target_songs[0]
+        cid = song.get('idx')
+        constants = [str(song.get('const')) for song in target_songs]
         
         songutil = SongUtil()
-        songutil.checkIsHit(os.getenv('COVER_URL'), song.get('imageName'))
+        songutil.checkIsHit(os.getenv('COVER_URL'), song.get('img'))
         
-        img_conponent = await Image.from_local(os.path.join(COVER_CACHE_DIR, song.get('imageName')))
-        msg_chain = MessageChain([Plain(f"c{song_index} - {song.get('title')}\n")]) 
+        img_conponent = await Image.from_local(os.path.join(COVER_CACHE_DIR, song.get('img') + ".webp"))
+        msg_chain = MessageChain([Plain(f"c{cid} - {song.get('title')}\n")]) 
         msg_chain.append(Plain(f"曲师: {song.get('artist')}\n"))
-        msg_chain.append(Plain(f"分类：{song.get('category')}\n"))
+        msg_chain.append(Plain(f"分类：{song.get('genre')}\n"))
+        msg_chain.append(Plain(f"BPM: {song.get('bpm')}\n"))
         msg_chain.append(Plain(f"追加版本: {song.get('version')}\n"))
-        msg_chain.append(Plain(f"发行日期: {song.get('releaseDate')}\n"))
+        msg_chain.append(Plain(f"发行日期: {calcDate(song.get('release'))}\n"))
         msg_chain.append(Plain(f"定数: "))
-        rating_list = [str(sheet.get('internalLevelValue')) for sheet in song.get('sheets')]
-        msg_chain.append(Plain(f"{' / '.join(rating_list)}\n"))
+        msg_chain.append(Plain(f"{' / '.join(constants)}\n"))
         msg_chain.append(img_conponent)
         await ctx.reply(msg_chain)
         return
     
     elif len(matched_songs) > 1:
         msg_chain = MessageChain([Plain(f"有多个曲目符合条件\n")])
-        for songId in matched_songs:
-            song_index = songs.index([song for song in songs if song.get('songId') == songId][0])
-            msg_chain.append(Plain(f"c{song_index} - {songId}\n"))
+        for cid in matched_songs:
+            name = None
+            for song in songs:
+                if song.get('idx') == cid:
+                    name = song.get('title')
+                    break
+            msg_chain.append(Plain(f"c{cid} - {name}\n"))
         msg_chain.append(Plain(f"\n请使用cid进行精准查询"))
         await ctx.reply(msg_chain)
         return
@@ -111,7 +130,7 @@ async def querySong(ctx: EventContext, args: list) -> None:
             sega_songs = json.load(f)
         title_list = [sega_songs.get('title') for sega_songs in sega_songs]
         searcher = Searcher()
-        matched_songs = searcher.generalFuzzySearch(song_name, title_list)
+        matched_songs = searcher.generalFuzzySearch(name, title_list)
         
         if len(matched_songs) == 1:
             matched_song = [song for song in sega_songs if song.get('title') == matched_songs[0]][0]

@@ -18,6 +18,7 @@ async def queryUpdate(ctx: EventContext, args: list) -> None:
     
     diff = None
     try:
+        await ctx.reply(MessageChain([Plain("正在更新...")]))
         diff = songmeta.songMeta()
         subprocess.run(['python', SCRIPT_MAPPING_PATH])
         msg_chain = MessageChain([

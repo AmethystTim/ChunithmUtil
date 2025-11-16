@@ -1,2 +1,3 @@
 difflib
 bs4
+playwright

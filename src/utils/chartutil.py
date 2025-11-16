@@ -36,7 +36,7 @@ class ChartUtil:
         with open(ID2NAME_PATH, "r", encoding="utf-8") as f:
             f = json.load(f)
             searcher = Searcher()
-            res = searcher.generalFuzzySearch(song['songId'], list(f.values()))
+            res = searcher.generalFuzzySearch(song['title'], list(f.values()))
             if len(res) > 0:
                 id = list(f.keys())[list(f.values()).index(res[0])]
                 return id
@@ -100,6 +100,8 @@ class ChartUtil:
     
     async def sendChart(self, file_path: str, group_id: str, song: dict, difficulty: str):
         '''使用消息平台发送谱面'''
+        cid = song.get('idx')
+        name = song.get('title')
         print("[ChunithmUtil] 使用消息平台发送谱面...")
         msgplatform = MsgPlatform(3000)
         encoded_string = ''
@@ -123,7 +125,7 @@ class ChartUtil:
                 {
                     "type": "text",
                     "data": {
-                        "text": f"歌曲 - {song.get('songId')}\n难度 - {difficulty}\nArtist - {song.get('artist')}\nNoteDesigner - {song.get('sheets')[songutil.getDiff2Index(difficulty)]['noteDesigner']}\nBPM - {song.get('bpm')}\nNotes - {song.get('sheets')[songutil.getDiff2Index(difficulty)]['noteCounts']['total']}"
+                        "text": f"c{cid} - {name}\n难度 - {difficulty}\nArtist - {song.get('artist')}\nBPM - {song.get('bpm')}\nNotes - {song.get('notes')}"
                     }
                 },
                 {

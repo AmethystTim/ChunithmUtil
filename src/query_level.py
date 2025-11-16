@@ -27,8 +27,8 @@ async def queryLevel(ctx: EventContext, args: list) -> None:
     
     msgs = "歌曲列表：\n"
     
-    with open(SONGS_PATH, "r", encoding="utf-8") as file:
-        songs = json.load(file).get("songs")    
+    with open(SONGS_PATH, "r", encoding="utf-8-sig") as file:
+        songs = json.load(file)  
     
     if '+' in level:  # +范围
         target_diff = level.split('+')[0]
