@@ -20,6 +20,9 @@ from .src.query_guess import *
 from .src.query_method import *
 from .src.query_chart_we import *
 from .src.query_updscore import *
+from .src.query_querybest import *
+from .src.query_copy import *
+from .src.query_bind import *
 
 from .src.utils.argsparser import *
 from .src.utils.guessgame import *
@@ -80,12 +83,10 @@ class ChunithmUtilPlugin(BasePlugin):
                 r"^\b(b30(?: simple)?)\b$",
             "b50":
                 r"^\b(b50(?: simple)?)\b$",
-            "aj30":
-                r"^\b(aj30(?: simple)?)\b$",
-            "copy cn":
-                r"^copy\s?cn$",
-            "copy rin":
-                r"^copy\s?rin$",
+            "chu copy [服务器]":
+                r"^chu\s?copy\s?(\S+)$",
+            "chu bind [服务器] [TOKEN]":
+                r"^chu\s*bind\s+(\S+)\s+(\S+)$",
             # ===== 弃用 =====
             "[歌名]这里怎么打":
                 r"^(.+)这里怎么打$",
@@ -117,53 +118,62 @@ class ChunithmUtilPlugin(BasePlugin):
     @handler(GroupMessageReceived)
     async def msg_received(self, ctx: EventContext):
         msg = str(ctx.event.message_chain).strip()
-        instruction = self.matchPattern(msg)
-        if not instruction:
+        pattern = self.matchPattern(msg)
+        if not pattern:
             return
-        match instruction:
+        match pattern:
             case "[歌名]是什么歌":
-                await querySong(ctx, parseArgs(self.instructions[instruction], msg))
+                await querySong(ctx, parseArgs(self.instructions[pattern], msg))
             
             case "chu随机一曲":
-                await queryRdnSong(ctx, parseArgs(self.instructions[instruction], msg))
+                await queryRdnSong(ctx, parseArgs(self.instructions[pattern], msg))
             
             case "添加别名|chuset [歌曲id] [别名1],[别名2],...":
-                await queryAddAlias(ctx, parseArgs(self.instructions[instruction], msg))
+                await queryAddAlias(ctx, parseArgs(self.instructions[pattern], msg))
             
             case "别名[歌曲id|歌曲别名]":
-                await queryGetAlias(ctx, parseArgs(self.instructions[instruction], msg))
+                await queryGetAlias(ctx, parseArgs(self.instructions[pattern], msg))
             
             case "chu lv [难度]":
-                await queryLevel(ctx, parseArgs(self.instructions[instruction], msg))
+                await queryLevel(ctx, parseArgs(self.instructions[pattern], msg))
             
             case "chu容错 [歌曲id/别名] [难度]":
-                await queryTolerance(ctx, parseArgs(self.instructions[instruction], msg))
+                await queryTolerance(ctx, parseArgs(self.instructions[pattern], msg))
             
             case "chuchart [歌曲id/别名] [难度]":
-                await queryChart(ctx, parseArgs(self.instructions[instruction], msg))
+                await queryChart(ctx, parseArgs(self.instructions[pattern], msg))
                 
             case "wechart [歌曲id/别名] [难度]":
-                await queryChartWE(ctx, parseArgs(self.instructions[instruction], msg))
+                await queryChartWE(ctx, parseArgs(self.instructions[pattern], msg))
             
             case "chu曲师 [曲师名]":
-                await queryArtist(ctx, parseArgs(self.instructions[instruction], msg))
+                await queryArtist(ctx, parseArgs(self.instructions[pattern], msg))
                 
             # case "chu谱师 [谱师名]":
-            #     await queryNoteDesigner(ctx, parseArgs(self.instructions[instruction], msg))
+            #     await queryNoteDesigner(ctx, parseArgs(self.instructions[pattern], msg))
             
             case "chu update":
-                await queryUpdate(ctx, parseArgs(self.instructions[instruction], msg))
+                await queryUpdate(ctx, parseArgs(self.instructions[pattern], msg))
             
             case "chu help":
                 await queryHelp(ctx)
             
             case "chu guess [难度]" | "chu guess end" | "guess [歌名]" | "chu hint":
-                await queryGuess(ctx, parseArgs(self.instructions[instruction], msg), instruction, self.guessgame)
+                await queryGuess(ctx, parseArgs(self.instructions[pattern], msg), pattern, self.guessgame)
                 
             case "update [分数] [歌名] [难度]":
-                await queryUpdScore(ctx, parseArgs(self.instructions[instruction], msg))
+                await queryUpdScore(ctx, parseArgs(self.instructions[pattern], msg))
+            
+            case "b30" | "b50":
+                await queryQueryBest(ctx, parseArgs(self.instructions[pattern], msg), pattern=pattern)
+            
+            case "chu copy [服务器]":
+                await queryCopy(ctx, parseArgs(self.instructions[pattern], msg))
+            
+            case "chu bind [服务器] [TOKEN]":
+                await queryBind(ctx, parseArgs(self.instructions[pattern], msg))
             # case "[歌名]这里怎么打" | "[歌名]有什么手法" | "[歌名]的[mid]这么打":
-            #     await queryMethod(ctx, parseArgs(self.instructions[instruction], msg), instruction, msg)
+            #     await queryMethod(ctx, parseArgs(self.instructions[pattern], msg), pattern, msg)
             
             case _:
                 pass

@@ -84,11 +84,14 @@ class SongUtil:
         Returns:
             曲师的歌曲列表
         '''
+        seen = set()
         songs_by_artist = []
         for song in songs:
             if song.get('artist') == artist:
-                songs_by_artist.append(song)
-        return list(set(songs_by_artist))
+                if song.get('songId') not in seen:
+                    seen.add(song.get('songId'))
+                    songs_by_artist.append(song)
+        return songs_by_artist
     
     # def getSheetsByNoteDesigner(self, note_designer: str, songs: list) -> dict:
     #     '''获取指定谱师的作品列表

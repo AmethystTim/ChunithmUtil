@@ -43,7 +43,7 @@ async def queryArtist(ctx: EventContext, args: list) -> None:
         songs_by_artist = songutil.getSongsByArtist(artist_name, songs)
         msg_chain = MessageChain([Plain(f"曲师 - {artist_name}作品列表：\n")])
         for song in songs_by_artist:
-            msg_chain.append(Plain(f"· c{songs.index(song)} - {song.get('songId')}\n"))
+            msg_chain.append(Plain(f"· c{song.get('idx')} - {song.get('title')}\n"))
         await ctx.reply(msg_chain)
     
     else:

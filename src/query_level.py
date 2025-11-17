@@ -33,33 +33,30 @@ async def queryLevel(ctx: EventContext, args: list) -> None:
     if '+' in level:  # +范围
         target_diff = level.split('+')[0]
         for song in songs:
-            for sheet in song.get('sheets'):
-                if int(target_diff) + 0.5 <= sheet.get('internalLevelValue') < int(target_diff) + 1:
-                    matched_songs.append({
-                        "id":songs.index(song),
-                        "title":song.get('title'),
-                        "internalLevelValue":sheet.get('internalLevelValue')
-                    })
+            if int(target_diff) + 0.5 <= song.get('const') < int(target_diff) + 1:
+                matched_songs.append({
+                    "id":song.get("idx"),
+                    "title":song.get('title'),
+                    "internalLevelValue":song.get('const')
+                })
     elif '.' in level: # 具体定数
         target_diff = float(level)
         for song in songs:
-            for sheet in song.get('sheets'):
-                if target_diff == sheet.get('internalLevelValue'):
-                    matched_songs.append({
-                        "id":songs.index(song),
-                        "title":song.get('title'),
-                        "internalLevelValue":sheet.get('internalLevelValue')
-                    })
+            if target_diff == song.get('const'):
+                matched_songs.append({
+                    "id":song.get("idx"),
+                    "title":song.get('title'),
+                    "internalLevelValue":song.get('const')
+                })
     else: # x~x+1定数范围
         target_diff = int(level)
         for song in songs:
-            for sheet in song.get('sheets'):
-                if int(target_diff) <= sheet.get('internalLevelValue') < int(target_diff) + 1:
-                    matched_songs.append({
-                        "id":songs.index(song),
-                        "title":song.get('title'),
-                        "internalLevelValue":sheet.get('internalLevelValue')
-                    })
+            if int(target_diff) <= song.get('const') < int(target_diff) + 1:
+                matched_songs.append({
+                    "id":song.get("idx"),
+                    "title":song.get('title'),
+                    "internalLevelValue":song.get('const')
+                })
     
     matched_songs.sort(key=lambda x:x.get('internalLevelValue'))
     for matched_song in matched_songs:

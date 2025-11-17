@@ -8,9 +8,7 @@ from pkg.plugin.events import *  # 导入事件类
 from pkg.platform.types import *
 
 from .query_song import searchSong
-from .utils.searcher import Searcher
 from .utils.songutil import SongUtil
-from plugins.ChunithmUtil.src.utils import songutil
 
 dotenv.load_dotenv()
 SONGS_PATH = os.path.join(os.path.dirname(__file__), "..", os.getenv("SONG_PATH"))
@@ -43,6 +41,7 @@ async def queryUpdScore(ctx: EventContext, args: list) -> None:
     score, name, difficulty = args
     score = int(score)
     name = name.strip()
+    user_id = str(ctx.event.sender_id)
     if difficulty is None:
         difficulty = "mas"
     cids = searchSong(name)
@@ -70,20 +69,20 @@ async def queryUpdScore(ctx: EventContext, args: list) -> None:
     target_songs = []
     songutil = SongUtil()
     difficulty = songutil.getDiff2Index(difficulty)
+    for song in songs:
+        if song.get('idx') == cid:
+            target_songs.append(song)
     try:
         if difficulty == 4 and len(target_songs) < 5: # 检查是否有Ultima难度
             await ctx.reply(MessageChain([Plain(f"歌曲{song.get('title')}无Ultima难度")]))
             return
     except Exception as e:
-        await ctx.reply(MessageChain([Plain(f"未知难度")]))
+        await ctx.reply(MessageChain([Plain(f"未知难度： {e}")]))
         return
-    for song in songs:
-        if song.get('idx') == cid:
-            target_songs.append(song)
     # 切换为对应难度
     song = target_songs[difficulty]
 
-    _, msg = updateScore(ctx.event.sender_id, cid, score, difficulty, song.get('title'))
+    _, msg = updateScore(user_id, cid, score, difficulty, song.get('title'))
     msg_chain = MessageChain([Plain(f"{msg}")])
     await ctx.reply(msg_chain)
     
