@@ -11,6 +11,7 @@ async def queryHelp(ctx: EventContext) -> None:
     '''
     await ctx.reply(MessageChain([
         Plain("CHUNITHM UTILS 指令帮助：\n"),
+        Plain("暂不支持私聊\n"),
         Plain("· chu help - 查看帮助\n"),
         Plain("· [别名/cid]是什么歌 - 查找歌曲\n"),
         Plain("· chuset [歌曲cid] [别名1，别名2，...] - 为歌曲添加别名\n"),

@@ -80,9 +80,9 @@ class ChunithmUtilPlugin(BasePlugin):
             "update [分数] [歌名] [难度]":
                  r"upd\s*(\d+)\s*(.*?)(?:\s+(exp|mas|ult))?$",
             "b30":
-                r"^\b(b30(?: simple)?)\b$",
+                r"^b30(?:\s?(simple))?$",
             "b50":
-                r"^\b(b50(?: simple)?)\b$",
+                r"^b50(?:\s?(simple))?$",
             "chu copy [服务器]":
                 r"^chu\s?copy\s?(\S+)$",
             "chu bind [服务器] [TOKEN]":

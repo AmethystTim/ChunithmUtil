@@ -1,9 +1,12 @@
 import os
 import os.path as osp
 import json
+import random
 import dotenv
 import sqlite3
 import numpy as np
+from jinja2 import Template
+import base64
 
 from pkg.plugin.context import EventContext
 from pkg.plugin.events import *  # 导入事件类
@@ -15,7 +18,10 @@ from .utils.apicaller import *
 
 dotenv.load_dotenv()
 SONGS_PATH = os.path.join(os.path.dirname(__file__), "..", os.getenv("SONG_PATH"))
+COVER_CACHE_DIR = os.path.join(os.path.dirname(__file__), '..', 'cache', 'covers')
 DB_PATH = os.path.join(os.path.dirname(__file__), "..", 'data', 'data.db')
+TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), "..", 'template', 'best.html')
+BEST_HTML_DIR = os.path.join(os.path.dirname(__file__), "..", 'cache', 'best')
 
 def getRank(score: int) -> str:
     if score >= 1009000:
@@ -49,6 +55,9 @@ def convertRank(rank: str):
         case _:
             return "S-"
 
+def format_with_commas(number: int):
+    return f"{number:,}"
+
 def getSongInfo(cids: np.ndarray, difficulty: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     '''获取歌曲信息
     
@@ -65,7 +74,6 @@ def getSongInfo(cids: np.ndarray, difficulty: np.ndarray) -> tuple[np.ndarray, n
         for cid, diff in zip(cids, difficulty):
             targets = []
             name_to_append = None
-            print(f"cid: {cid}, diff: {diff}")
             for song in songs:
                 if song.get('idx') == str(cid):
                     targets.append(song.get('const'))
@@ -161,6 +169,124 @@ def calcRating(const: np.ndarray, score: np.ndarray) -> np.ndarray:
     rating = (const + bias).astype(float).round(2)
     return rating
 
+def renderCardHTML(records: list[tuple]):
+    '''生成B30图表HTML'''
+    html = []
+    # row_open = False
+    html = ['<div class="card-container">']
+    for index, record in enumerate(records):
+        # [cid, score, difficulty, name, const, rating, cover]
+        # 处理背景色 background-color: rgb(123, 7, 195);
+        background_color = "rgb(123, 7, 195)"
+        match str(record[2]):
+            case "basic":
+                background_color = "#10D472)"
+            case "advanced":
+                background_color = "#D9EB3A"
+            case "expert":
+                background_color = "#FF0000"
+            case "master":
+                background_color = "#8C00FF"
+            case "ultima":
+                background_color = "#000000"
+            case _:
+                background_color = "#8C00FF"
+        # 处理cover
+        songutil = SongUtil()
+        songutil.checkIsHit(os.getenv('COVER_URL'), record[-1])
+        card_html = f"""
+        <div class="card">
+            <div class="song_cover">
+                <img src="{os.path.join(COVER_CACHE_DIR, record[-1] + ".webp")}" alt="">
+            </div>
+            <div class="upper" style="background-color: {background_color};">
+                <div class="sequence"><p>#{index+1}</p></div>
+                <div class="song_data">
+                    <div class="song_stats">
+                        <p class="song_name">{record[3]}</p>
+                        <p class="song_score">{format_with_commas(int(record[1]))}</p>
+                        <div class="song_diff_const_rt">
+                            <div class="song_diff_const">
+                                <p class="song_diff">{record[2][0].upper()+record[2][1:]}</p>
+                                <p class="song_const">{record[-3]}</p>
+                            </div>
+                            <div>
+                                <p class="song_rt">Rating: {record[-2]}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="lower">
+                <div class="extra">
+                    <div class="clear_status">CLEAR</div>
+                    <div class="rank">{getRank(int(record[1]))}</div>
+                </div>
+            </div>
+        </div>
+        """
+        html.append(card_html)
+
+    # if row_open:
+    #     html.append("</tr>")
+    html.append('</div>')
+    return "\n".join(html)
+
+def renderBestHTML(card_html: str, best30: float, username: str="CHUNITHMCHUNITHMCHUNITHM", avatar: str=None):
+    '''渲染Best30HTML'''
+    with open(TEMPLATE_PATH, 'r', encoding='utf-8'):
+        template = Template(open(TEMPLATE_PATH, 'r', encoding='utf-8').read())
+    bg_image = osp.join(osp.dirname(__file__), "..", "images", "best_bg.webp")
+    with open(bg_image, 'rb') as f:
+        encoded_bg = base64.b64encode(f.read()).decode()
+    html = template.render(
+        cards=card_html, 
+        b30=best30, 
+        username=username, 
+        avatar=osp.join(osp.dirname(__file__), "..", "images", "default_avatar.png"),
+        bg_image=encoded_bg
+    )
+    ### DEBUG
+    with open(f"best_{username}.html", 'w', encoding='utf-8') as f:
+        f.write(html)
+    return html
+
+async def convertHTMLtoIMG(html: str, output_path: str, width=2230, height=720, wait_until='networkidle'):
+    '''HTML转图片'''
+    def embed_local_images(html_str: str) -> str:
+        """
+        将 HTML 中 <img src="本地路径"> 转为 base64 内嵌
+        """
+        import base64
+        def repl(match):
+            src = match.group(1)
+            path = Path(src)
+            if path.exists() and path.is_file():
+                # 读取文件并转 base64
+                mime_type = 'image/png'
+                if src.lower().endswith('.webp'):
+                    mime_type = 'image/webp'
+                elif src.lower().endswith('.jpg') or src.lower().endswith('.jpeg'):
+                    mime_type = 'image/jpeg'
+                elif src.lower().endswith('.gif'):
+                    mime_type = 'image/gif'
+                with path.open('rb') as f:
+                    b64 = base64.b64encode(f.read()).decode()
+                return f'src="data:{mime_type};base64,{b64}"'
+            return match.group(0)
+
+        return re.sub(r'src=["\'](.*?)["\']', repl, html_str)
+    
+    html = embed_local_images(html)
+    
+    from playwright.async_api import async_playwright
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        page = await browser.new_page(viewport={'width': width, 'height': height})
+        await page.set_content(html, wait_until=wait_until)
+        await page.screenshot(path=output_path, full_page=True)
+        await browser.close()
+
 async def queryBest30(ctx: EventContext, user_id: str, use_simple=False):
     '''查询b30'''
     try:
@@ -199,6 +325,7 @@ async def queryBest30(ctx: EventContext, user_id: str, use_simple=False):
         except Exception as e:
             average_rating = 0.0
             await ctx.reply(MessageChain([Plain(f"计算错误，{e}")]))
+        average_rating = round(average_rating, 3)
         # 仅返回文本
         if use_simple:
             # [cid, score, difficulty, name, const, rating] -> [cid, name, difficulty, score, rating]
@@ -209,7 +336,7 @@ async def queryBest30(ctx: EventContext, user_id: str, use_simple=False):
                 unit = {
                     "type": "node",
                     "data": {
-                        "user_id": "114514",
+                        "user_id": user_id,
                         "nickname": f"B{i+1}",
                         "content": [
                             {
@@ -237,7 +364,30 @@ async def queryBest30(ctx: EventContext, user_id: str, use_simple=False):
             await msgplatform.callApi("/send_forward_msg", message_data)
         # 返回完整分表图片
         else:
-            pass
+            # 增加cover列
+            cover = []
+            with open(SONGS_PATH, 'r', encoding='utf-8-sig') as f:
+                songs = json.load(f)
+                for cid in sorted_records[:, 0]:
+                    for song in songs:
+                        if song.get('idx') == str(cid)[1:]:
+                            cover.append(song.get('img'))
+                            break
+            try:
+                # [cid, score, difficulty, name, const, rating] -> [cid, score, difficulty, name, const, rating, cover]
+                sorted_records = np.concatenate((sorted_records, np.array(cover).reshape(-1, 1)), axis=1)
+            except Exception as e:
+                await ctx.reply(MessageChain([Plain(f"拼接失败，{e}")]))
+            try:
+                card_html = renderCardHTML(sorted_records.tolist())
+                html = renderBestHTML(card_html, average_rating)
+                img_path = osp.join(BEST_HTML_DIR, f"best_{user_id}.png")
+                await convertHTMLtoIMG(html, img_path)
+                img_component = await Image.from_local(img_path)
+                await ctx.reply(MessageChain([img_component]))
+            except Exception as e:
+                # await ctx.reply(MessageChain([Plain(f"traceback: {traceback.format_exc()}")]))
+                await ctx.reply(MessageChain([Plain(f"生成Best30图表失败，{e}")]))
     except sqlite3.Error as e:
         print(e)
         return -1, f"查询失败，{e}"
@@ -255,6 +405,7 @@ async def queryQueryBest(ctx: EventContext, args: list, **kwargs) -> None:
     use_simple = True if use_simple else False
     user_id = str(ctx.event.sender_id)
     pattern = kwargs .get('pattern', None)
+    
     match pattern:
         case 'b30':
             await ctx.reply(MessageChain([Plain(f"正在查询Best30...")]))

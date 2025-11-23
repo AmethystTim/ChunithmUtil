@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Best30</title>
+    <style>
+        body {
+            height: 100vh;
+            margin: 0px;
+            padding: 0px;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
+            background-image: url('data:image/webp;base64,{{ bg_image|safe }}');
+            background-size: cover;
+            color: black;
+            z-index: 0;
+        }
+        main {
+            position: absolute;
+            top: 0px;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            padding: 20px 30px;
+            box-sizing: border-box;
+        }
+        header {
+            width: 18%;
+            display: flex; 
+            flex-direction: row; 
+            align-items: stretch;
+            justify-content: flex-start;
+            color: #000; 
+            margin-bottom: 10px;
+            background-color: blanchedalmond;
+            background: linear-gradient(
+                120deg,
+                rgba(255, 0, 0, 0.3),
+                rgba(255, 165, 0, 0.3),
+                rgba(234, 234, 16, 0.698),
+                rgba(7, 231, 7, 0.3),
+                rgba(26, 170, 236, 0.3),
+                rgba(75, 0, 130, 0.3),
+                rgba(238, 130, 238, 0.3)
+            );
+            border: 1px solid #cccccc;
+            padding: 10px 10px;
+            overflow-x: hidden;
+        }
+        .userinfo {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            flex-shrink: 1;
+        }
+        .avatar {
+            display: flex;
+            align-items: stretch;
+            flex-shrink: 0;
+            max-width: 50%;
+            margin-left: 25px;
+        }
+        .avatar img {
+            height: 100%;
+            width: auto;
+            display: block;
+            border: 1px solid #cccccc;
+        }
+        .card-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: flex-start; /* 或 center */
+        }
+
+        .card {
+            position: relative;
+            width: 417px;
+            height: 170px;
+            color: white;
+            overflow: hidden;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+            background: linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.15));
+        }
+        .song_data {
+            display: flex;
+            flex-direction: row;
+        }
+        .song_cover {
+            position: absolute;
+            left: 15px;
+            bottom: 15px;
+        }
+        .song_cover img{
+            width: 120px;
+            height: auto;
+            border: 2px solid rgb(216, 216, 216);
+            border-radius: 4px;
+        }
+
+        .upper {
+            padding-left: 155px;
+            padding-bottom: 2px;
+            min-height: 100px;
+            box-sizing: border-box;
+        }
+        .lower {
+            padding-left: 155px;
+            background-color: white;
+            padding-top: 7px;
+            padding-bottom: 5px;
+            color: black;
+            min-height: 50px;
+            box-sizing: border-box;
+        }
+        .sequence {
+            display: flex;
+            justify-content: flex-end;
+            padding-right: 10px;
+            font-size: 7px;
+        }
+        .sequence p {
+            margin: 0px;
+            padding: 0px;
+            font-size: 20px;
+            font-weight: 500;
+            color: #fff;
+        }
+        .song_stats {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            padding-top: 8px;
+            padding-bottom: 8px;
+        }
+        .song_stats p {
+            margin: 0px;
+            padding: 0px;
+            font-weight: 500;
+        }
+        .song_name {
+            font-size: 20px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            max-width: 240px;
+        }
+        .song_score {
+            font-size: 40px;
+            margin-top: -2px !important;
+            font-weight: 800 !important;
+        }
+        .song_diff_const_rt {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            width: 250px;
+            align-items: center;
+        }
+        .song_diff_const {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+        .song_diff_const .song_const{
+            margin-left: 7px;
+        }
+        .extra {
+            width: 240px;
+            display: flex;
+            flex-direction: row;
+            color: black;
+            justify-content: space-between;
+            align-items: center;
+            padding-right: 10px;
+            font-weight: 700;
+            font-size: 22px;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <header>
+            <div class="userinfo">
+                <div style="overflow-x: hidden; max-width: 250px;">
+                    <p style="margin:0; font-size: 48px;">{{ username|safe }}</p>
+                </div>
+                <div style="color:black;display:flex; flex-direction:row; align-items:center; font-size: 36px;">
+                    <p style="margin:0;">Best 30</p>
+                    <p style="margin:0; margin-left: 10px">{{ b30|safe }}</p>
+                </div>
+            </div>
+            <div class="avatar">
+                <img src="{{ avatar|safe }}" alt="">
+            </div>
+        </header>
+        <div>
+            <table>
+                {{ cards|safe }}
+            </table>
+        </div>
+    </main>
+</body>
+</html>
