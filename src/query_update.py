@@ -30,7 +30,7 @@ async def queryUpdate(ctx: EventContext, args: list) -> None:
         if len(diff) != 0:
             msg_chain.append(Plain(f"，新增曲目：\n"))
             for song in diff[::-1][ : min(20, len(diff))]:
-                msg_chain.append(Plain(f"· {song.get('songId')}\n"))
+                msg_chain.append(Plain(f"· {song.get('title')}\n"))
         await ctx.reply(msg_chain)
     
     except subprocess.CalledProcessError as e:

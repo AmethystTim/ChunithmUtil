@@ -31,7 +31,8 @@
             align-items: stretch;
             justify-content: flex-start;
             color: #000; 
-            margin-bottom: 10px;
+            font-weight: 600;
+            margin-bottom: 20px;
             background-color: blanchedalmond;
             background: linear-gradient(
                 120deg,
@@ -44,7 +45,7 @@
                 rgba(238, 130, 238, 0.3)
             );
             border: 1px solid #cccccc;
-            padding: 10px 10px;
+            padding: 15px 15px;
             overflow-x: hidden;
         }
         .userinfo {
@@ -69,7 +70,7 @@
         .card-container {
             display: flex;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 25px;
             justify-content: flex-start; /* 或 center */
         }
 
@@ -139,7 +140,7 @@
             font-weight: 500;
         }
         .song_name {
-            font-size: 20px;
+            font-size: 22px;
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
@@ -182,10 +183,10 @@
     <main>
         <header>
             <div class="userinfo">
-                <div style="overflow-x: hidden; max-width: 250px;">
+                <div style="overflow-x: hidden; width: 258px;">
                     <p style="margin:0; font-size: 48px;">{{ username|safe }}</p>
                 </div>
-                <div style="color:black;display:flex; flex-direction:row; align-items:center; font-size: 36px;">
+                <div style="display:flex; flex-direction:row; align-items:center; font-size: 36px;">
                     <p style="margin:0;">Best 30</p>
                     <p style="margin:0; margin-left: 10px">{{ b30|safe }}</p>
                 </div>

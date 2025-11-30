@@ -1,13 +1,16 @@
 cache/charts/*
 cache/covers/*
 cache/others/*
+cache/best/*
 data/*
 test/*
 logs/*
 
 !cache/charts/.gitkeep
 !cache/covers/.gitkeep
+!cache/others/default.png
 !cache/others/.gitkeep
+!cache/best/.gitkeep
 !data/alias.json
 !logs/.gitkeep
 

@@ -18,7 +18,7 @@ from .src.query_level import *
 from .src.query_update import *
 from .src.query_guess import *
 from .src.query_method import *
-from .src.query_chart_we import *
+from .src.query_wechart import *
 from .src.query_updscore import *
 from .src.query_querybest import *
 from .src.query_copy import *
@@ -59,7 +59,7 @@ class ChunithmUtilPlugin(BasePlugin):
             "chuchart [歌曲id/别名] [难度]": 
                 r"^chuchart\s?(c\d+|.+?)(?: (exp|mas|ult))?$",
             "wechart [歌曲id/别名] [难度]":
-                r"^wecart\s?(c\d+|.+?)(.*)$",
+                r"^wechart\s?(c\d+|.+?)(?=\s+[^\s]$|$)(?:\s+([^\s]))?$",
             # ===== 查人 =====
             "chu曲师 [曲师名]" : 
                 r"^chu(?:曲师|\s?qs)\s?(.+)$",
@@ -174,7 +174,7 @@ class ChunithmUtilPlugin(BasePlugin):
                 await queryBind(ctx, parseArgs(self.instructions[pattern], msg))
             # case "[歌名]这里怎么打" | "[歌名]有什么手法" | "[歌名]的[mid]这么打":
             #     await queryMethod(ctx, parseArgs(self.instructions[pattern], msg), pattern, msg)
-            
+
             case _:
                 pass
                         

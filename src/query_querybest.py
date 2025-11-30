@@ -166,7 +166,8 @@ def calcRating(const: np.ndarray, score: np.ndarray) -> np.ndarray:
         return bias
 
     bias = getBias(score)
-    rating = (const + bias).astype(float).round(2)
+    rating = (const + bias).astype(float)
+    rating = np.trunc(rating * 100) / 100
     return rating
 
 def renderCardHTML(records: list[tuple]):
@@ -232,7 +233,7 @@ def renderCardHTML(records: list[tuple]):
     html.append('</div>')
     return "\n".join(html)
 
-def renderBestHTML(card_html: str, best30: float, username: str="CHUNITHMCHUNITHMCHUNITHM", avatar: str=None):
+def renderBestHTML(card_html: str, best30: float, username: str="CHUNITHM", avatar: str=None):
     '''渲染Best30HTML'''
     with open(TEMPLATE_PATH, 'r', encoding='utf-8'):
         template = Template(open(TEMPLATE_PATH, 'r', encoding='utf-8').read())
@@ -251,7 +252,7 @@ def renderBestHTML(card_html: str, best30: float, username: str="CHUNITHMCHUNITH
         f.write(html)
     return html
 
-async def convertHTMLtoIMG(html: str, output_path: str, width=2230, height=720, wait_until='networkidle'):
+async def convertHTMLtoIMG(html: str, output_path: str, width=2300, height=730, wait_until='networkidle'):
     '''HTML转图片'''
     def embed_local_images(html_str: str) -> str:
         """

@@ -52,7 +52,7 @@ def searchSong(name: str) -> list[str]:
     # 2. 别名搜索 
     for song in alias_for_songs:
         for alias in song.get('aliases'):
-            if alias == name:  # 别名采用精准匹配
+            if alias == name.lower():  # 别名采用精准匹配
                 cids.append(song.get('cid'))
     if len(cids) > 0:  # 别名存在，直接返回
         return cids
@@ -60,7 +60,7 @@ def searchSong(name: str) -> list[str]:
     # 3. 模糊搜索
     searcher = Searcher()
     names = list(set([song.get('title') for song in songs]))
-    fuzzy_matched_songs = searcher.generalFuzzySearch(name, names)
+    fuzzy_matched_songs = searcher.generalFuzzySearch(name.lower(), names)
     fuzzy_matched_cids = []
     for fuzzy_matched_song in fuzzy_matched_songs:
         for song in songs:
@@ -96,8 +96,10 @@ async def querySong(ctx: EventContext, args: list) -> None:
         
         songutil = SongUtil()
         songutil.checkIsHit(os.getenv('COVER_URL'), song.get('img'))
-        
-        img_conponent = await Image.from_local(os.path.join(COVER_CACHE_DIR, song.get('img') + ".webp"))
+        if os.path.exists(os.path.join(COVER_CACHE_DIR, song.get('img') + ".webp")):
+            img_conponent = await Image.from_local(os.path.join(COVER_CACHE_DIR, song.get('img') + ".webp"))
+        else:
+            img_conponent = await Image.from_local(os.path.join(COVER_CACHE_DIR, "default.png"))
         msg_chain = MessageChain([Plain(f"c{cid} - {song.get('title')}\n")]) 
         msg_chain.append(Plain(f"曲师: {song.get('artist')}\n"))
         msg_chain.append(Plain(f"分类：{song.get('genre')}\n"))
