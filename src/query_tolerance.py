@@ -57,7 +57,7 @@ async def queryTolerance(ctx: EventContext, args: list) -> None:
     songutil = SongUtil()
     index = songutil.getDiff2Index(difficulty)
     try:
-        if index == 4 and len(song['sheets']) < 5: # 检查是否有Ultima难度
+        if index == 4 and len(target_songs) < 5: # 检查是否有Ultima难度
             await ctx.reply(MessageChain([Plain(f"歌曲{song.get('title')}无Ultima难度")]))
             return
     except Exception as e:
