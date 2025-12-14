@@ -32,10 +32,10 @@ class SongUtil:
         if self.diff2index.get(difficulty.lower()):
             return self.diff2index[difficulty.lower()]
         else:
-            for keys in self.alias4diff.keys():
-                for alias in self.alias4diff[keys]:
+            for key in self.alias4diff.keys():
+                for alias in self.alias4diff[key]:
                     if alias == difficulty.lower():
-                        return self.diff2index[keys]
+                        return self.diff2index[key]
         return None
     
     def getIndex2Diff(self, index: int) -> str:
