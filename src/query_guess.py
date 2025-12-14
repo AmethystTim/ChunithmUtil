@@ -196,15 +196,18 @@ async def queryGuess(ctx: EventContext, args: list, pattern: str, guessgame: Gue
             # bpm, category, artist, 定数, notes
             songutil = SongUtil()
             seed = random.randint(0, 3)
-            hints = [
-                f"歌曲分类为：{song.get('genre')}",
-                f"曲师为：{song.get('artist')}",
-                f"{songutil.getIndex2Diff(seed)}难度定数为：{target_songs[seed].get('const')}",
-                f"{songutil.getIndex2Diff(seed)}难度有{target_songs[seed].get('notes')}个note",
-                f"发行版本为：{song.get('version')}",
-            ]
-            
-            hint = random.choice(hints)
+            try:
+                hints = [
+                    f"歌曲分类为：{song.get('genre')}",
+                    f"曲师为：{song.get('artist')}",
+                    f"{songutil.getIndex2Diff(seed)}难度定数为：{target_songs[seed].get('const')}",
+                    f"{songutil.getIndex2Diff(seed)}难度有{target_songs[seed].get('notes')}个note",
+                    f"发行版本为：{song.get('version')}",
+                ]
+                
+                hint = random.choice(hints)
+            except Exception as e:
+                hint = f"歌曲分类为：{song.get('genre')}"
             await ctx.reply(MessageChain([
                 Plain("提示🌟\n"),
                 Plain(hint)
