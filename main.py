@@ -12,6 +12,8 @@ from .src.query_chart import *
 from .src.query_alias import *
 from .src.query_rdnsong import *
 from .src.query_tolerance import * 
+from .src.query_version import *
+
 from .src.query_aritst import *
 # from .src.query_notedesigner import *
 from .src.query_level import *
@@ -55,6 +57,8 @@ class ChunithmUtilPlugin(BasePlugin):
                 r"^chu\s?lv\s?(\S+)$",
             "chu容错 [歌曲id/别名] [难度]": 
                 r"^(?:chu容错|churc)\s?(c\d+|.+?)(?: (exp|mas|ult))?$",
+            "chuver [版本名]":
+                r"^chuver\s?(\S+)$",
             # ===== 查谱 =====
             "chuchart [歌曲id/别名] [难度]": 
                 r"^chuchart\s?(c\d+|.+?)(?: (exp|mas|ult))?$",
@@ -139,6 +143,9 @@ class ChunithmUtilPlugin(BasePlugin):
             
             case "chu容错 [歌曲id/别名] [难度]":
                 await queryTolerance(ctx, parseArgs(self.instructions[pattern], msg))
+                
+            case "chuver [版本名]":
+                await queryVersion(ctx, parseArgs(self.instructions[pattern], msg))
             
             case "chuchart [歌曲id/别名] [难度]":
                 await queryChart(ctx, parseArgs(self.instructions[pattern], msg))
