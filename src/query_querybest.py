@@ -69,6 +69,7 @@ def getSongInfo(cids: np.ndarray, difficulty: np.ndarray) -> tuple[np.ndarray, n
     deleted = []
     cids = np.asarray(cids).ravel()
     difficulty = np.asarray(difficulty).ravel()
+    songutil = SongUtil()
     with open(SONGS_PATH, 'r', encoding='utf-8-sig') as f:
         songs = json.load(f)
         for cid, diff in zip(cids, difficulty):
@@ -76,10 +77,12 @@ def getSongInfo(cids: np.ndarray, difficulty: np.ndarray) -> tuple[np.ndarray, n
             name_to_append = None
             for song in songs:
                 if song.get('idx') == str(cid):
-                    targets.append(song.get('const'))
+                    targets.append(song)
                     name_to_append = song.get('title')
             if not targets == []:
-                const.append(targets[diff])
+                index_list = [songutil.getDiff2Index(s.get('diff')) for s in targets]
+                index = index_list.index(diff)
+                const.append(targets[index].get('const'))
                 name.append(name_to_append)
             else:
                 const.append(0.0)
@@ -165,9 +168,10 @@ def calcRating(const: np.ndarray, score: np.ndarray) -> np.ndarray:
 
         return bias
 
+    ep = 1e-6
     bias = getBias(score)
     rating = (const + bias).astype(float)
-    rating = np.trunc(rating * 100) / 100
+    rating = np.trunc((rating + ep) * 100) / 100
     return rating
 
 def renderCardHTML(records: list[tuple]):
@@ -282,7 +286,14 @@ async def convertHTMLtoIMG(html: str, output_path: str, width=2300, height=730, 
     
     from playwright.async_api import async_playwright
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
+        browser = await p.chromium.launch(
+        executable_path="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        headless=True,
+        args=[
+            "--disable-gpu",
+            "--no-sandbox",
+            "--disable-dev-shm-usage",
+        ])
         page = await browser.new_page(viewport={'width': width, 'height': height})
         await page.set_content(html, wait_until=wait_until)
         await page.screenshot(path=output_path, full_page=True)

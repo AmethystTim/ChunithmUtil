@@ -68,20 +68,18 @@ async def queryUpdScore(ctx: EventContext, args: list) -> None:
     cid = cids[0]
     target_songs = []
     songutil = SongUtil()
-    difficulty = songutil.getDiff2Index(difficulty)
     for song in songs:
         if song.get('idx') == cid:
             target_songs.append(song)
-    try:
-        if difficulty == 4 and len(target_songs) < 5: # 检查是否有Ultima难度
-            await ctx.reply(MessageChain([Plain(f"歌曲{song.get('title')}无Ultima难度")]))
-            return
-    except Exception as e:
-        await ctx.reply(MessageChain([Plain(f"未知难度： {e}")]))
+    index = songutil.getDiff2Index(difficulty)
+    index_list = [songutil.getDiff2Index(s.get('diff')) for s in target_songs]
+    if index not in index_list:
+        await ctx.reply(MessageChain([Plain(f"歌曲{song.get('title')}无{difficulty}难度")]))
         return
+    
     # 切换为对应难度
-    song = target_songs[difficulty]
-
+    song = target_songs[index_list.index(index)]
+    difficulty = songutil.getDiff2Index(difficulty)
     _, msg = updateScore(user_id, cid, score, difficulty, song.get('title'))
     msg_chain = MessageChain([Plain(f"{msg}")])
     await ctx.reply(msg_chain)
