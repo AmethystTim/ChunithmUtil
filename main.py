@@ -58,7 +58,7 @@ class ChunithmUtilPlugin(BasePlugin):
             "chu容错 [歌曲id/别名] [难度]": 
                 r"^(?:chu容错|churc)\s?(c\d+|.+?)(?: (exp|mas|ult))?$",
             "chuver [版本名]":
-                r"^chuver\s?(\S+)$",
+                r"^chuver\s?(.+)$",
             # ===== 查谱 =====
             "chuchart [歌曲id/别名] [难度]": 
                 r"^chuchart\s?(c\d+|.+?)(?: (exp|mas|ult))?$",

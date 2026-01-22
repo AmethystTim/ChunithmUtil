@@ -13,8 +13,8 @@ SONGS_PATH = os.path.join(os.path.dirname(__file__), "..", os.getenv("SONG_PATH"
 VERSION_SONGS_DIR = os.path.join(os.path.dirname(__file__), "..", "cache", "version")
 
 version_alias = {
-    "": ["original", "无印", "ori", "初代", "無印"],
-    "PLUS": ["无印+", "无印plus", "original+", "original plus", "無印+"],
+    "": ["original", "无印", "ori", "初代", "無印", "origin"],
+    "PLUS": ["无印+", "无印plus", "original+", "original plus", "無印+", "origin+", "originplus", "origin plus"],
     "AIR": [],
     "AIR PLUS": ["air+", "air plus"],
     "STAR": [],
@@ -32,7 +32,7 @@ version_alias = {
     "LUMINOUS": ["lmn", "lmns"],
     "LUMINOUS PLUS": ["luminous+", "luminous plus", "lmnp", "lmn+"],
     "VERSE": ["vrs"],
-    "X-VERSE": ["x-verse", "xvrs", "xverse"],
+    "X-VERSE": ["x-verse", "xvrs", "xverse", "xv"],
     "X-VERSE-X": ["xvx", "xvrsx", "x-versex", "x-verse-x", "sex", "xversex"]
 }
 
@@ -68,26 +68,13 @@ def convertVersion(version: str):
             return song.get('version')
     return None
 
-async def queryVersion(ctx: EventContext, args: list) -> None:
-    '''查询指定版本的歌曲
-    
-    Args:
-        ctx (EventContext): 事件上下文
-        args (list): 参数列表
-    Returns:
-        None: 无返回值
-    '''
-    version, = args
+def fetch_ver_songs(version: str):
     version_ = convertVersion(version)
     if version_ == None:
-        await ctx.reply(f"未知版本：{version}，请尝试其他版本别名")
         return
     
     songs = []
     matched_songs = []
-    
-    msgs = f"{version_}歌曲列表：\n"
-    
     if isHitCache(version_) and version_ != getLatestVersion():
         with open(os.path.join(VERSION_SONGS_DIR, version_ + ".json")) as file:
             matched_songs = json.load(file)
@@ -104,6 +91,27 @@ async def queryVersion(ctx: EventContext, args: list) -> None:
             with open(os.path.join(VERSION_SONGS_DIR, version_ + ".json"), "w") as cahce_f:
                 json.dump(matched_songs, cahce_f, ensure_ascii=False, indent=4)
                 print(f"缓存版本{version_}")
+    
+    return matched_songs
+    
+async def queryVersion(ctx: EventContext, args: list) -> None:
+    '''查询指定版本的歌曲
+    
+    Args:
+        ctx (EventContext): 事件上下文
+        args (list): 参数列表
+    Returns:
+        None: 无返回值
+    '''
+    version, = args
+    version_ = convertVersion(version)
+    if version_ == None:
+        await ctx.reply(f"未知版本：{version}，请尝试其他版本别名")
+        return
+    matched_songs = []
+    
+    msgs = f"{version_}歌曲列表：\n"
+    matched_songs = fetch_ver_songs(version_)
     
     for matched_song in matched_songs:
         msgs = msgs + f"c{matched_song.get('idx')} - {matched_song.get('title')} - {matched_song.get('const')}\n"
