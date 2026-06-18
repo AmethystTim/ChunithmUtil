@@ -1,4 +1,3 @@
-from curses.ascii import isdigit
 import os
 import aiohttp
 import PIL
