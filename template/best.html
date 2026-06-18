@@ -9,7 +9,16 @@
             height: 100vh;
             margin: 0px;
             padding: 0px;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
+            font-family:
+                "Noto Sans CJK SC",
+                "Noto Sans CJK JP",
+                "Noto Sans SC",
+                "Noto Sans JP",
+                "Microsoft YaHei",
+                "Meiryo",
+                "Yu Gothic",
+                "Segoe UI",
+                sans-serif;
             background-image: url('data:image/webp;base64,{{ bg_image|safe }}');
             background-size: cover;
             color: black;
@@ -25,10 +34,11 @@
             box-sizing: border-box;
         }
         header {
-            width: 18%;
+            width: fit-content;
+            max-width: calc(100% - 60px);
             display: flex; 
             flex-direction: row; 
-            align-items: stretch;
+            align-items: center;
             justify-content: flex-start;
             color: #000; 
             font-weight: 600;
@@ -46,20 +56,48 @@
             );
             border: 1px solid #cccccc;
             padding: 15px 15px;
-            overflow-x: hidden;
+            box-sizing: border-box;
+            overflow: hidden;
         }
         .userinfo {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            flex-shrink: 1;
+            flex: 0 1 auto;
+            min-width: 180px;
+            max-width: calc(100vw - 240px);
+        }
+        .username {
+            overflow: hidden;
+            min-width: 180px;
+            max-width: 520px;
+        }
+        .username p {
+            margin: 0;
+            font-size: 48px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .best-rating {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            font-size: 36px;
+            white-space: nowrap;
+        }
+        .best-rating p {
+            margin: 0;
+        }
+        .best-rating .rating-value {
+            margin-left: 10px;
         }
         .avatar {
             display: flex;
-            align-items: stretch;
+            align-items: center;
             flex-shrink: 0;
-            max-width: 50%;
             margin-left: 25px;
+            height: 108px;
         }
         .avatar img {
             height: 100%;
@@ -72,12 +110,21 @@
             flex-wrap: wrap;
             gap: 25px;
             justify-content: flex-start; /* 或 center */
+            width: 2185px;
         }
 
         .card {
             position: relative;
             width: 417px;
-            height: 170px;
+            height: 195px;
+            font-weight: 700;
+            font-family:
+                "SimHei",
+                "Noto Sans CJK SC",
+                "Noto Sans CJK JP",
+                "Microsoft YaHei",
+                "Meiryo",
+                sans-serif;
             color: white;
             overflow: hidden;
             box-shadow: 0 6px 18px rgba(0,0,0,0.35);
@@ -90,33 +137,40 @@
         .song_cover {
             position: absolute;
             left: 15px;
-            bottom: 15px;
+            top: 22px;
         }
         .song_cover img{
-            width: 120px;
+            width: 128px;
             height: auto;
             border: 2px solid rgb(216, 216, 216);
             border-radius: 4px;
         }
 
         .upper {
-            padding-left: 155px;
+            padding-left: 157px;
             padding-bottom: 2px;
-            min-height: 100px;
             box-sizing: border-box;
         }
         .lower {
-            padding-left: 155px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding-left: 157px;
+            display: flex;
+            align-items: center;
             background-color: white;
-            padding-top: 7px;
-            padding-bottom: 5px;
+            padding-top: 2px;
+            padding-bottom: 2px;
             color: black;
-            min-height: 50px;
+            height: 40px;
+            min-height: 40px;
             box-sizing: border-box;
         }
         .sequence {
             display: flex;
             justify-content: flex-end;
+            align-items: flex-end;
+            height: 22px;
             padding-right: 10px;
             font-size: 7px;
         }
@@ -124,39 +178,52 @@
             margin: 0px;
             padding: 0px;
             font-size: 20px;
-            font-weight: 500;
+            line-height: 1;
+            font-weight: 800;
             color: #fff;
+            transform: translateY(4px);
         }
         .song_stats {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            padding-top: 8px;
-            padding-bottom: 8px;
+            padding-top: 0px;
+            padding-bottom: 4px;
         }
         .song_stats p {
             margin: 0px;
             padding: 0px;
-            font-weight: 500;
+            font-weight: 700;
         }
         .song_name {
             font-size: 22px;
+            font-weight: 700;
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
             max-width: 240px;
         }
         .song_score {
+            font-family:
+                "Montserrat",
+                "Arial Black",
+                "Noto Sans CJK SC",
+                "Microsoft YaHei",
+                sans-serif;
             font-size: 40px;
-            margin-top: -2px !important;
+            line-height: 1;
+            margin-top: 3px !important;
+            margin-bottom: 4px !important;
             font-weight: 800 !important;
         }
         .song_diff_const_rt {
             display: flex;
             flex-direction: row;
             justify-content: space-between;
-            width: 250px;
+            width: 240px;
             align-items: center;
+            margin-top: 0px;
+            line-height: 1;
         }
         .song_diff_const {
             display: flex;
@@ -168,14 +235,37 @@
         }
         .extra {
             width: 240px;
+            height: 32px;
             display: flex;
             flex-direction: row;
             color: black;
             justify-content: space-between;
             align-items: center;
-            padding-right: 10px;
-            font-weight: 700;
+            font-weight: 800;
             font-size: 22px;
+        }
+        .clear_status {
+            width: 120px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            color: #111;
+            flex-shrink: 0;
+        }
+        .rank {
+            width: 120px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            flex-shrink: 0;
+            border-radius: 5px;
+            box-sizing: border-box;
+            line-height: 1;
+            letter-spacing: 0;
+            color: #111;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.45);
         }
     </style>
 </head>
@@ -183,12 +273,12 @@
     <main>
         <header>
             <div class="userinfo">
-                <div style="overflow-x: hidden; width: 258px;">
-                    <p style="margin:0; font-size: 48px;">{{ username|safe }}</p>
+                <div class="username">
+                    <p>{{ username|safe }}</p>
                 </div>
-                <div style="display:flex; flex-direction:row; align-items:center; font-size: 36px;">
-                    <p style="margin:0;">Best 30</p>
-                    <p style="margin:0; margin-left: 10px">{{ b30|safe }}</p>
+                <div class="best-rating">
+                    <p>Best 30</p>
+                    <p class="rating-value">{{ b30|safe }}</p>
                 </div>
             </div>
             <div class="avatar">
