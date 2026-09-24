@@ -1,3 +1,4 @@
 difflib
 bs4
 playwright
+PySocks>=1.7.1

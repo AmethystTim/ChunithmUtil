@@ -20,6 +20,8 @@ def calcDate(timeStamp: int):
     '''时间戳转YEAR-MONTH-DAY'''
     import time
     timeArray = time.localtime(timeStamp*100)
+    # 补1天
+    timeArray = time.localtime(time.mktime(timeArray) + 86400)
     return time.strftime("%Y-%m-%d", timeArray)
 
 
@@ -99,7 +101,7 @@ async def querySong(ctx: EventContext, args: list) -> None:
         if os.path.exists(os.path.join(COVER_CACHE_DIR, song.get('img') + ".webp")):
             img_conponent = await Image.from_local(os.path.join(COVER_CACHE_DIR, song.get('img') + ".webp"))
         else:
-            img_conponent = await Image.from_local(os.path.join(COVER_CACHE_DIR, "default.png"))
+            img_conponent = await Image.from_local(os.path.join(COVER_CACHE_DIR, "default.webp"))
         msg_chain = MessageChain([Plain(f"c{cid} - {song.get('title')}\n")]) 
         msg_chain.append(Plain(f"曲师: {song.get('artist')}\n"))
         msg_chain.append(Plain(f"分类：{song.get('genre')}\n"))

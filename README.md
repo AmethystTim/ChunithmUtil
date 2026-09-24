@@ -99,6 +99,7 @@ src/utils/mapping.py     # 获取谱面ID-歌曲的映射表
 |---|---|---|---|
 |chubind [`服务器`] [`TOKEN`]|绑定服务器身份信息|`服务器`（可选`lx`，`rin`）<br> `TOKEN`（`lx`为[个人API](https://maimai.lxns.net/user/profile?tab=thirdparty)，`rin`为20位卡号）|chubind lx chunithm-114-CHUNITHMCHUNITHM_chunithm=；<br>chubind rin 11451419198106166160|
 |chucopy [`服务器`]|从指定服务器迁移游玩记录|`服务器`（可选`lx`，`rin`）|chucopy lx；<br>chucopy rin|
+|chudrop|清除发送者自己的全部游玩记录，保留账号绑定|无|chudrop|
 |b30 <`分表类型: None`>|查询B30|`分表类型`（可选`simple`仅返回文本B30，不指定返回默认B30图表）|b30<br>b30 simple|
 
 ### 猜歌部分

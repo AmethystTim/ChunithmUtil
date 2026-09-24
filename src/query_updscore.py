@@ -27,11 +27,11 @@ def updateScore(user_id: str, cid: str, score: int, difficulty: int, name: str) 
     except sqlite3.Error as e:
         print(e)
         return -1, f"更新失败：{e}"
-    
+
 
 async def queryUpdScore(ctx: EventContext, args: list) -> None:
     '''更新歌曲分数
-    
+
     Args:
         ctx (EventContext): 事件上下文
         args (list): 参数列表
@@ -40,12 +40,17 @@ async def queryUpdScore(ctx: EventContext, args: list) -> None:
     '''
     score, name, difficulty = args
     score = int(score)
+
+    if score > 10_10000:
+        await ctx.reply(MessageChain([Plain("桂")]))
+        return
+
     name = name.strip()
     user_id = str(ctx.event.sender_id)
     if difficulty is None:
         difficulty = "mas"
     cids = searchSong(name)
-    
+
     songs = []
     with open(SONGS_PATH, 'r', encoding='utf-8-sig') as f:
         songs = json.load(f)
@@ -64,7 +69,7 @@ async def queryUpdScore(ctx: EventContext, args: list) -> None:
         msg_chain.append(Plain(f"\n请使用cid进行精准查询"))
         await ctx.reply(msg_chain)
         return
-    
+
     cid = cids[0]
     target_songs = []
     songutil = SongUtil()
@@ -76,11 +81,10 @@ async def queryUpdScore(ctx: EventContext, args: list) -> None:
     if index not in index_list:
         await ctx.reply(MessageChain([Plain(f"歌曲{song.get('title')}无{difficulty}难度")]))
         return
-    
+
     # 切换为对应难度
     song = target_songs[index_list.index(index)]
     difficulty = songutil.getDiff2Index(difficulty)
     _, msg = updateScore(user_id, cid, score, difficulty, song.get('title'))
     msg_chain = MessageChain([Plain(f"{msg}")])
     await ctx.reply(msg_chain)
-    

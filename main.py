@@ -25,6 +25,7 @@ from .src.query_updscore import *
 from .src.query_querybest import *
 from .src.query_copy import *
 from .src.query_bind import *
+from .src.query_drop import queryDrop
 
 from .src.utils.argsparser import *
 from .src.utils.guessgame import *
@@ -74,6 +75,8 @@ class ChunithmUtilPlugin(BasePlugin):
             # ===== 猜歌 =====
             "chu guess [难度]":
                 r"^chu\s?guess(?: (bas|adv|exp|mas|ult))?$",
+            "chu guess range [最低] [最高]":
+                r"^chu\s?guess\s?range(?:\s+(clear|\d+(?:\.\d+)?)(?:\s+(\d+(?:\.\d+)?))?)?$",
             "chu guess end":
                 r"^(chu\s?guess\s?end|cge)$",
             "guess [歌名]":
@@ -87,8 +90,10 @@ class ChunithmUtilPlugin(BasePlugin):
                 r"^b30(?:\s?(simple))?$",
             "b50":
                 r"^b50(?:\s?(simple))?$",
+            "chu drop":
+                r"^chu\s?drop$",
             "chu copy [服务器]":
-                r"^chu\s?copy\s?(\S+)$",
+                r"^chu\s?copy(?:\s+(\S+))?$",
             "chu bind [服务器] [TOKEN]":
                 r"^chu\s*bind\s+(\S+)\s+(\S+)$",
             # ===== 弃用 =====
@@ -165,7 +170,8 @@ class ChunithmUtilPlugin(BasePlugin):
             case "chu help":
                 await queryHelp(ctx)
             
-            case "chu guess [难度]" | "chu guess end" | "guess [歌名]" | "chu hint":
+            case "chu guess [难度]" | "chu guess range [最低] [最高]" \
+                    | "chu guess end" | "guess [歌名]" | "chu hint":
                 await queryGuess(ctx, parseArgs(self.instructions[pattern], msg), pattern, self.guessgame)
                 
             case "update [分数] [歌名] [难度]":
@@ -174,6 +180,9 @@ class ChunithmUtilPlugin(BasePlugin):
             case "b30" | "b50":
                 await queryQueryBest(ctx, parseArgs(self.instructions[pattern], msg), pattern=pattern)
             
+            case "chu drop":
+                await queryDrop(ctx)
+
             case "chu copy [服务器]":
                 await queryCopy(ctx, parseArgs(self.instructions[pattern], msg))
             

@@ -11,30 +11,7 @@ from .utils.apicaller import *
 dotenv.load_dotenv()
 SONGS_PATH = os.path.join(os.path.dirname(__file__), "..", os.getenv("SONG_PATH"))
 VERSION_SONGS_DIR = os.path.join(os.path.dirname(__file__), "..", "cache", "version")
-
-version_alias = {
-    "": ["original", "无印", "ori", "初代", "無印", "origin"],
-    "PLUS": ["无印+", "无印plus", "original+", "original plus", "無印+", "origin+", "originplus", "origin plus"],
-    "AIR": [],
-    "AIR PLUS": ["air+", "air plus"],
-    "STAR": [],
-    "STAR PLUS": ["star+", "star plus"],
-    "AMAZON": [],
-    "AMAZON PLUS": ["amazon+", "amazon plus"],
-    "CRYSTAL": [],
-    "CRYSTAL PLUS": ["crystal+", "crystal plus"],
-    "PARADISE": [],
-    "PARADISE LOST": ["paradise lost"],
-    "NEW": [],
-    "NEW PLUS": ["new+", "new plus"],
-    "SUN": [],
-    "SUN PLUS": ["sun+", "sun plus"],
-    "LUMINOUS": ["lmn", "lmns"],
-    "LUMINOUS PLUS": ["luminous+", "luminous plus", "lmnp", "lmn+"],
-    "VERSE": ["vrs"],
-    "X-VERSE": ["x-verse", "xvrs", "xverse", "xv"],
-    "X-VERSE-X": ["xvx", "xvrsx", "x-versex", "x-verse-x", "sex", "xversex"]
-}
+VERSION_JSON_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "version.json")
 
 def getLatestVersion():
     with open(SONGS_PATH, 'r') as f:
@@ -48,6 +25,8 @@ def convertVersion(version: str):
     '''将用户输入version转化为reina version名'''
     version = version.upper()
     # 检查是否为key
+    with open(VERSION_JSON_PATH, 'r') as f:
+        version_alias = json.load(f)
     if version in version_alias.keys():
         return version
     # 检查是否在别名列表

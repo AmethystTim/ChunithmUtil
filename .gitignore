@@ -1,7 +1,4 @@
-cache/charts/*
-cache/covers/*
-cache/others/*
-cache/best/*
+cache/*
 data/*
 test/*
 logs/*
@@ -11,10 +8,14 @@ logs/*
 !cache/others/default.png
 !cache/others/.gitkeep
 !cache/best/.gitkeep
+!cache/version/.gitkeep
 !data/alias.json
 !logs/.gitkeep
 
 test/
+
+template/
+!template/best.html
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

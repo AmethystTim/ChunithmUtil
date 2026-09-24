@@ -29,7 +29,7 @@ class SongUtil:
         Returns:
             难度对应的索引
         '''
-        if self.diff2index.get(difficulty.lower()):
+        if difficulty.lower() in self.diff2index:
             return self.diff2index[difficulty.lower()]
         else:
             for key in self.alias4diff.keys():
@@ -88,8 +88,9 @@ class SongUtil:
         songs_by_artist = []
         for song in songs:
             if song.get('artist') == artist:
-                if song.get('songId') not in seen:
-                    seen.add(song.get('songId'))
+                song_id = song.get('idx')
+                if song_id is not None and song_id not in seen:
+                    seen.add(song_id)
                     songs_by_artist.append(song)
         return songs_by_artist
     
@@ -116,7 +117,13 @@ class SongUtil:
     #                 sheets_by_note_designer[song.get('songId')].append(sheet.get('difficulty'))
     #     return sheets_by_note_designer 
 
-    def checkIsHit(self, coverUrl: str, imageName: str, extension: str=".webp") -> None:
+    def checkIsHit(
+        self,
+        coverUrl: str,
+        imageName: str,
+        extension: str=".webp",
+        timeout: float | None = None,
+    ) -> None:
         '''检查是否缓存曲绘
         
         Args:
@@ -131,8 +138,9 @@ class SongUtil:
         if os.path.exists(os.path.join(COVER_CACHE_DIR, complete_filename)):
             return
         else:
-            response = requests.get(coverUrl + complete_filename)
+            response = requests.get(coverUrl + complete_filename, timeout=timeout)
             if response.status_code == 200:
+                os.makedirs(COVER_CACHE_DIR, exist_ok=True)
                 with open(os.path.join(COVER_CACHE_DIR, complete_filename), 'wb') as f:
                     f.write(response.content)
             return
@@ -151,7 +159,8 @@ class SongUtil:
         if index is None:
             return None
         total_score = 10_10000  # 理论值分数
-        total_notes = song.get('notes')
+        total_notes = song.get('notes', 0)
+        assert total_notes > 0
         justice_loss = 0.01 * (total_score / total_notes)    # 小J损失分数
         attack_loss = (50/101) * (total_score / total_notes)    # attack损失分数
         # 鸟容错计算

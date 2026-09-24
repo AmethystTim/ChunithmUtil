@@ -1,5 +1,4 @@
 import os
-import aiohttp
 import PIL
 import dotenv
 import traceback

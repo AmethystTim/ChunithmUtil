@@ -3,7 +3,7 @@ import os
 import json
 import dotenv
 import random
-import PIL
+import PIL.Image
 
 from pkg.core.entities import LauncherTypes
 from pkg.plugin.context import EventContext
@@ -18,6 +18,68 @@ dotenv.load_dotenv()
 SONGS_PATH = os.path.join(os.path.dirname(__file__), "..", os.getenv("SONG_PATH"))
 GAME_CACHE_PATH = os.path.join(os.path.dirname(__file__), "..", 'cache', 'others')
 COVER_CACHE_DIR = os.path.join(os.path.dirname(__file__), '..', 'cache', 'covers')
+CROP_SIZE_SCALE = 0.75
+
+
+def _get_cached_cover(song: dict) -> str | None:
+    """Return the cover path when it exists and is a readable image."""
+    image_name = song.get("img")
+    if not image_name:
+        return None
+
+    cover_path = os.path.join(COVER_CACHE_DIR, f"{image_name}.webp")
+    if not os.path.isfile(cover_path):
+        return None
+
+    try:
+        # A failed download may leave an HTML/error response in the cache, so an
+        # existence check alone is not enough.
+        with PIL.Image.open(cover_path) as image:
+            image.verify()
+    except (OSError, ValueError):
+        return None
+    return cover_path
+
+
+def _const_in_range(
+    song: dict, minimum: float | None, maximum: float | None
+) -> bool:
+    value = song.get("const")
+    if not isinstance(value, (int, float)):
+        return False
+    return (
+        (minimum is None or value >= minimum)
+        and (maximum is None or value <= maximum)
+    )
+
+
+def _format_const_range(minimum: float | None, maximum: float | None) -> str:
+    if minimum is None and maximum is None:
+        return "不限"
+    if minimum is None:
+        return f"{maximum:.1f} 以下"
+    if maximum is None:
+        return f"{minimum:.1f} 以上"
+    return f"{minimum:.1f}～{maximum:.1f}"
+
+
+def _choose_song_with_cached_cover(
+    songs: list[dict], minimum: float | None = None, maximum: float | None = None
+) -> tuple[dict, str] | None:
+    """Randomly choose a unique song in range with a readable local cover."""
+    songs_by_id = {}
+    for song in songs:
+        if _const_in_range(song, minimum, maximum):
+            songs_by_id.setdefault(str(song.get("idx")), song)
+
+    candidates = list(songs_by_id.values())
+    random.shuffle(candidates)
+    for song in candidates:
+        cover_path = _get_cached_cover(song)
+        if cover_path is not None:
+            return song, cover_path
+    return None
+
 
 async def queryGuess(ctx: EventContext, args: list, pattern: str, guessgame: GuessGame) -> None:
     '''处理猜歌事件
@@ -37,21 +99,30 @@ async def queryGuess(ctx: EventContext, args: list, pattern: str, guessgame: Gue
             if ctx.event.query.launcher_type == LauncherTypes.PERSON:
                 return
             if not guessgame.check_is_exist(group_id):
-                guessgame.add_group(group_id)
                 '''为该群创建一个新的猜歌游戏'''
                 songs = None
                 with open(SONGS_PATH, "r", encoding="utf-8-sig") as file:
                     songs = json.load(file)
-                song = random.choice(songs)
+
+                # 猜歌不依赖现场下载。随机歌曲没有本地曲绘时，继续随机
+                # 尝试其他歌曲，直到找到可读的已缓存曲绘。
+                minimum, maximum = guessgame.get_const_range(group_id)
+                selected = _choose_song_with_cached_cover(songs, minimum, maximum)
+                if selected is None:
+                    const_range = _format_const_range(minimum, maximum)
+                    await ctx.reply(MessageChain([
+                        Plain(
+                            f"定数范围 {const_range} 内没有已缓存曲绘的歌曲，"
+                            "暂时无法创建猜歌"
+                        )
+                    ]))
+                    return
+                song, img_path = selected
+
                 # 过滤World's End曲目
                 # while song.get("songId").startswith("(WE)"):
                 #     song = random.choice(songs)
                 cid = song.get('idx')
-                guessgame.set_song_index(group_id, cid)
-                
-                songutil = SongUtil()
-                songutil.checkIsHit(os.getenv('COVER_URL'), song.get('img'))
-                
                 # 随机剪裁曲绘
                 difficulty = difficulty if difficulty else "mas"
                 factor = 2
@@ -68,20 +139,24 @@ async def queryGuess(ctx: EventContext, args: list, pattern: str, guessgame: Gue
                         factor = 3.0
                     case _:
                         factor = 2.5
-                img_path = os.path.join(COVER_CACHE_DIR, song.get('img') + ".webp")
-                img = PIL.Image.open(img_path)
-                img_w, img_h = img.size
-                new_w = img_w / factor
-                new_h = img_h / factor
-                rand_x = random.randint(0, int(img_w - new_w))
-                rand_y = random.randint(0, int(img_h - new_h))
-                new_img = img.crop((rand_x, rand_y, rand_x + new_w, rand_y + new_h))
-                new_img.save(os.path.join(GAME_CACHE_PATH, f"{group_id}.png"))
+                os.makedirs(GAME_CACHE_PATH, exist_ok=True)
+                game_image_path = os.path.join(GAME_CACHE_PATH, f"{group_id}.png")
+                with PIL.Image.open(img_path) as img:
+                    img_w, img_h = img.size
+                    new_w = img_w / factor * CROP_SIZE_SCALE
+                    new_h = img_h / factor * CROP_SIZE_SCALE
+                    rand_x = random.randint(0, int(img_w - new_w))
+                    rand_y = random.randint(0, int(img_h - new_h))
+                    new_img = img.crop((rand_x, rand_y, rand_x + new_w, rand_y + new_h))
+                    new_img.save(game_image_path)
                 
                 # 加载剪裁后的曲绘
-                img_component = await Image.from_local(os.path.join(GAME_CACHE_PATH, f"{group_id}.png"))
+                img_component = await Image.from_local(game_image_path)
+                # 只有在曲绘已成功生成后才记录游戏，避免留下无法继续的状态。
+                guessgame.add_group(group_id)
+                guessgame.set_song_index(group_id, cid)
                 msg_chain = MessageChain([
-                    Plain(f"Chunithm Guess\n裁剪难度：{difficulty}\n可以使用“guess [歌名/别名]”进行猜歌"),
+                    Plain(f"Chunithm Guess\n裁剪难度：{difficulty}\n定数范围：{_format_const_range(minimum, maximum)}\n可以使用“guess [歌名/别名]”进行猜歌"),
                     img_component
                 ])
                 await ctx.reply(msg_chain)
@@ -93,6 +168,43 @@ async def queryGuess(ctx: EventContext, args: list, pattern: str, guessgame: Gue
                     Plain("\n该群已经有正在进行的猜歌，请不要重复创建")
                 ]))
                 return
+        case "chu guess range [最低] [最高]":
+            minimum_arg, maximum_arg = args
+            group_id = str(ctx.event.launcher_id)
+
+            if minimum_arg is None:
+                minimum, maximum = guessgame.get_const_range(group_id)
+                await ctx.reply(MessageChain([
+                    Plain(
+                        "本群猜歌定数范围："
+                        f"{_format_const_range(minimum, maximum)}"
+                    )
+                ]))
+                return
+
+            if minimum_arg == "clear":
+                guessgame.clear_const_range(group_id)
+                await ctx.reply(MessageChain([
+                    Plain("已清除本群猜歌定数范围")
+                ]))
+                return
+
+            minimum = float(minimum_arg)
+            maximum = float(maximum_arg) if maximum_arg is not None else None
+            if maximum is not None and minimum > maximum:
+                await ctx.reply(MessageChain([
+                    Plain("最低定数不能高于最高定数")
+                ]))
+                return
+
+            guessgame.set_const_range(group_id, minimum, maximum)
+            await ctx.reply(MessageChain([
+                Plain(
+                    "已将本群猜歌定数范围设置为："
+                    f"{_format_const_range(minimum, maximum)}"
+                )
+            ]))
+            return
         case "chu guess end":
             if not guessgame.check_is_exist(str(ctx.event.launcher_id)):
                 await ctx.reply(MessageChain([
