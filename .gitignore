@@ -1,3 +1,10 @@
+# Local configuration, maintenance scripts and private request logic
+.env
+.env.*
+!.env_example
+quick_update*
+query_copy*
+
 cache/*
 data/*
 test/*
