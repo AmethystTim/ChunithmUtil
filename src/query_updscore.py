@@ -9,6 +9,7 @@ from pkg.platform.types import *
 
 from .query_song import searchSong
 from .utils.songutil import SongUtil
+from .utils.recorddb import save_record
 
 dotenv.load_dotenv()
 SONGS_PATH = os.path.join(os.path.dirname(__file__), "..", os.getenv("SONG_PATH"))
@@ -17,11 +18,7 @@ DB_PATH = os.path.join(os.path.dirname(__file__), "..", 'data', 'data.db')
 def updateScore(user_id: str, cid: str, score: int, difficulty: int, name: str) -> None:
     '''更新歌曲分数'''
     try:
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute(f"INSERT OR REPLACE INTO record (user_id, cid, score, difficulty) VALUES (?, ?,?,?)", (user_id, cid, score, difficulty))
-        conn.commit()
-        conn.close()
+        save_record(DB_PATH, user_id, cid, score, difficulty, "manual")
         su = SongUtil()
         return 0, f"已将c{cid} - {name}的{su.getIndex2Diff(difficulty)}难度分数更新为{score}"
     except sqlite3.Error as e:

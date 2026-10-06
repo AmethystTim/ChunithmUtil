@@ -26,9 +26,11 @@ from .src.query_querybest import *
 from .src.query_copy import *
 from .src.query_bind import *
 from .src.query_drop import queryDrop
+from .src.query_prog import queryConst, queryProg
 
 from .src.utils.argsparser import *
 from .src.utils.guessgame import *
+from .src.utils.recorddb import migrate_record_source
 
 os.environ.pop("http_proxy", None)
 os.environ.pop("https_proxy", None)
@@ -43,8 +45,12 @@ class ChunithmUtilPlugin(BasePlugin):
     # 插件加载时触发
     def __init__(self, host: APIHost):
         self.instructions = {
-            "chu help": 
+            "chu help":
                 r"^chu\s?help$",
+            "ChuProg 旧帮助":
+                r"^chuprg\s+help$",
+            "ChuProg 旧解绑":
+                r"^unbind$",
             # ===== 查歌 =====
             "[歌名]是什么歌": 
                 r"^(.+)是什么歌$",
@@ -84,6 +90,10 @@ class ChunithmUtilPlugin(BasePlugin):
             "chu hint":
                 r"^chu\s?hint$",
             # ===== 查分 =====
+            "chuconst [等级] [服务器]":
+                r"^chuconst\s*(\S+)(?:\s+(\S+))?$",
+            "chuprog [版本] [牌子] [服务器]":
+                r"^chuprog\s+(.+)$",
             "update [分数] [歌名] [难度]":
                  r"upd\s*(\d+)\s*(.*?)(?:\s+(exp|mas|ult))?$",
             "b30":
@@ -122,7 +132,7 @@ class ChunithmUtilPlugin(BasePlugin):
 
     # 异步初始化
     async def initialize(self):
-        pass
+        migrate_record_source(os.path.join(os.path.dirname(__file__), 'data', 'data.db'))
         
     @handler(GroupMessageReceived)
     async def msg_received(self, ctx: EventContext):
@@ -169,6 +179,12 @@ class ChunithmUtilPlugin(BasePlugin):
             
             case "chu help":
                 await queryHelp(ctx)
+
+            case "ChuProg 旧帮助":
+                await queryLegacyHelp(ctx)
+
+            case "ChuProg 旧解绑":
+                await queryLegacyHelp(ctx, unbind=True)
             
             case "chu guess [难度]" | "chu guess range [最低] [最高]" \
                     | "chu guess end" | "guess [歌名]" | "chu hint":
@@ -176,6 +192,12 @@ class ChunithmUtilPlugin(BasePlugin):
                 
             case "update [分数] [歌名] [难度]":
                 await queryUpdScore(ctx, parseArgs(self.instructions[pattern], msg))
+
+            case "chuconst [等级] [服务器]":
+                await queryConst(ctx, parseArgs(self.instructions[pattern], msg))
+
+            case "chuprog [版本] [牌子] [服务器]":
+                await queryProg(ctx, parseArgs(self.instructions[pattern], msg))
             
             case "b30" | "b50":
                 await queryQueryBest(ctx, parseArgs(self.instructions[pattern], msg), pattern=pattern)

@@ -2,3 +2,5 @@ difflib
 bs4
 playwright
 PySocks>=1.7.1
+Pillow>=9.1.0
+markdown-it-py>=3.0.0

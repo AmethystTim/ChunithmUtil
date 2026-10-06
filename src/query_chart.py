@@ -10,6 +10,7 @@ from pkg.platform.types import *
 from .query_song import searchSong
 from .utils.songutil import SongUtil
 from .utils.chartutil import ChartUtil
+from .utils.imageutil import image_for_send
 
 dotenv.load_dotenv()
 SONGS_PATH = os.path.join(os.path.dirname(__file__), "..", os.getenv("SONG_PATH"))
@@ -75,7 +76,7 @@ async def queryChart(ctx: EventContext, args: list) -> None:
     if chartutil.checkIsHit(chartid, difficulty):
         local_path = os.path.join(CHART_CACHE_DIR, f"{chartid}_{'' if difficulty == 'mas' else difficulty}.png")
         try:
-            img_conponent = await Image.from_local(local_path)
+            img_conponent = await image_for_send(local_path)
         except FileNotFoundError:
             await ctx.reply(MessageChain([Plain(f"未找到歌曲对应谱面，可能是内部错误或数据未更新")]))
             return

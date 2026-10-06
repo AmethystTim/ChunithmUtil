@@ -20,6 +20,8 @@ from pkg.platform.types import *
 from .query_song import searchSong
 from .utils.songutil import *
 from .utils.apicaller import *
+from .utils.recorddb import load_records
+from .utils.imageutil import image_for_send
 
 dotenv.load_dotenv()
 SONGS_PATH = os.path.join(os.path.dirname(__file__), "..", os.getenv("SONG_PATH"))
@@ -425,11 +427,10 @@ async def convertHTMLtoIMG(html: str, output_path: str, width=2300, height=730, 
 async def queryBest30(ctx: EventContext, user_id: str, use_simple=False):
     '''查询b30'''
     try:
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute("SELECT * FROM record WHERE user_id = ?", (user_id,))
-        records = c.fetchall()
-        conn.close()
+        records = [
+            (user_id, row['cid'], row['score'], row['difficulty'])
+            for row in load_records(DB_PATH, user_id)
+        ]
         if len(records) == 0:
             await ctx.reply(MessageChain([Plain(f"你还没有记录哦，可以使用chucopy迁移不同服务器游玩数据")]))
             return
@@ -527,7 +528,7 @@ async def queryBest30(ctx: EventContext, user_id: str, use_simple=False):
 
                 img_path = osp.join(BEST_HTML_DIR, f"best_{user_id}.png")
                 await convertHTMLtoIMG(html, img_path)
-                img_component = await Image.from_local(img_path)
+                img_component = await image_for_send(img_path)
             except Exception as e:
                 # await ctx.reply(MessageChain([Plain(f"traceback: {traceback.format_exc()}")]))
                 await ctx.reply(MessageChain([Plain(f"生成Best30图表失败，{e}")]))

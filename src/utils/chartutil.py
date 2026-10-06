@@ -13,6 +13,7 @@ import httpx
 from .searcher import *
 from .apicaller import *
 from .songutil import *
+from .imageutil import encode_image_for_send
 
 CHART_CACHE_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'cache', 'charts')
 
@@ -108,13 +109,12 @@ class ChartUtil:
         if not os.path.exists(file_path):
             print(f"[ChunithmUtil] 文件不存在！ {file_path}")
             return
-        async with aiofiles.open(file_path, 'rb') as image_file:
-            image_binary = await image_file.read()
-            encoded_string = base64.b64encode(image_binary).decode()
+        image_binary, suffix = await asyncio.to_thread(encode_image_for_send, file_path)
+        encoded_string = base64.b64encode(image_binary).decode()
         response = await msgplatform.callApi('/download_file', {
             "base64": encoded_string,
             "thread_count": 0,
-            "name": os.path.basename(file_path)
+            "name": os.path.splitext(os.path.basename(file_path))[0] + suffix
         })
         print(f"[ChunithmUtil] 将图片存储至temp目录 {response['data']['file']}")
         temp_path = response['data']['file']
